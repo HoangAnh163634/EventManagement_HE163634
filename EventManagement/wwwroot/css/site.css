@@ -1,22 +1,175 @@
+
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+    html {
+        font-size: 16px;
+    }
 }
 
 body {
-  margin-bottom: 60px;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #0F0F0F;
+    color: #FFFFFF;
 }
+
+.hero {
+    background-size: cover;
+    background-position: center;
+    color: #FFFFFF;
+    padding-top: 80px;
+    position: relative;
+    overflow: hidden;
+}
+
+.parallax-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(26, 26, 26, 0.5), rgba(15, 15, 15, 0.8));
+    z-index: 1;
+}
+
+.hero .container {
+    position: relative;
+    z-index: 2;
+}
+
+.event-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+    background-color: #1A1A1A;
+}
+
+    .event-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(224, 198, 143, 0.3);
+    }
+
+.btn-custom-gold {
+    background-color: #E0C68F;
+    border: none;
+    color: #0F0F0F;
+}
+
+    .btn-custom-gold:hover {
+        background-color: #D3B47A;
+        color: #FFFFFF;
+    }
+
+.btn-outline-gold {
+    color: #E0C68F;
+    border-color: #E0C68F;
+}
+
+    .btn-outline-gold:hover {
+        background-color: #E0C68F;
+        color: #0F0F0F;
+    }
+
+.btn-gold {
+    background-color: #E0C68F;
+    border-color: #E0C68F;
+}
+
+    .btn-gold:hover {
+        background-color: #D3B47A;
+        border-color: #D3B47A;
+    }
+
+.navbar-dark {
+    transition: box-shadow 0.3s;
+}
+
+    .navbar-dark.shadow-lg {
+        box-shadow: 0 4px 15px rgba(224, 198, 143, 0.2);
+    }
+
+.bg-gray-dark {
+    background-color: #2F2F2F;
+    border-radius: 10px;
+}
+
+.bg-gray-light {
+    background-color: #D3D3D3;
+    border-radius: 10px;
+    color: #0F0F0F;
+}
+
+.tool-grid .card {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.tool-tooltip {
+    position: absolute;
+    background: #1A1A1A;
+    color: #E0C68F;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+    display: none;
+    max-width: 200px;
+    font-size: 0.9rem;
+}
+
+.review-card {
+    border: 1px solid #2F2F2F;
+    border-radius: 10px;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.carousel-indicators {
+    bottom: -30px;
+}
+
+    .carousel-indicators button {
+        background-color: #E0C68F;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin: 0 5px;
+    }
+
+    .carousel-indicators .active {
+        background-color: #D3B47A;
+    }
+
+footer {
+    flex-shrink: 0;
+}
+
+    footer a {
+        text-decoration: none;
+    }
+
+main {
+    flex-grow: 1;
+}
+
+.text-muted {
+    color: #A0A0A0 !important;
+}
+
+.text-gold {
+    color: #E0C68F !important;
+}
+
+.shadow-lg {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+
