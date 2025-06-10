@@ -1,4 +1,4 @@
-﻿@using System.Security.Claims
+﻿
 <header>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container">
@@ -7,53 +7,21 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link text-white" href="/">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="/Events">Events</a>
                     </li>
-                    @if (User.Identity.IsAuthenticated)
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="/Events/Create">Create Event</a>
-                        </li>
-                    }
-                </ul>
-                <ul class="navbar-nav">
-                    @if (User.Identity.IsAuthenticated)
-                    {
-                        var fullName = ((ClaimsPrincipal)User).Claims.FirstOrDefault(c => c.Type == "FullName")?.Value ?? User.Identity.Name;
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-white fw-bold" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Chào mừng, <span class="text-warning">@fullName</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" href="/Account/Profile">Profile</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form method="post" action="/Account/Logout">
-                                        <button type="submit" class="dropdown-item">Logout</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
-                    }
-                    else
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="/Account/Login">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="/Account/Register">Register</a>
-                        </li>
-                    }
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/Events/Create">Create Event</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/Account/Login">Login</a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 </header>
-
-<!-- Optional: Animate.css for dropdown effect -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
