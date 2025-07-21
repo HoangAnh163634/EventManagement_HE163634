@@ -7,6 +7,8 @@ namespace EventManagement.Pages.Account;
 
 public class ResendVerificationModel : PageModel
 {
+    [TempData]
+    public required string Message { get; set; }
     private readonly EventManagementDbContext _context;
     private readonly EmailService _emailService;
 

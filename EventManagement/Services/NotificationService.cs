@@ -10,15 +10,18 @@ public class NotificationService
     private readonly EventManagementDbContext _context;
     private readonly IHubContext<NotificationHub> _hubContext;
     private readonly EmailService _emailService;
+    private readonly ILogger<NotificationService> _logger;
 
     public NotificationService(
         EventManagementDbContext context,
         IHubContext<NotificationHub> hubContext,
-        EmailService emailService)
+        EmailService emailService,
+        ILogger<NotificationService> logger)
     {
         _context = context;
         _hubContext = hubContext;
         _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<List<Notification>> GetUserNotificationsAsync(int userId)
@@ -34,6 +37,26 @@ public class NotificationService
     {
         return await _context.Notifications
             .CountAsync(n => n.UserId == userId && !n.IsRead);
+    }
+
+    public async Task<int> GetUnreadNotificationCount(string userId)
+    {
+        if (string.IsNullOrEmpty(userId))
+        {
+            return 0;
+        }
+
+        try
+        {
+            return await _context.Notifications
+                .Where(n => n.UserId.ToString() == userId && !n.IsRead && n.Status != "Deleted")
+                .CountAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting unread notification count for user {UserId}", userId);
+            return 0;
+        }
     }
 
     public async Task MarkAsReadAsync(int notificationId)

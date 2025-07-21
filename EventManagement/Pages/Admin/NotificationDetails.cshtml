@@ -1,0 +1,275 @@
+@page "{id:int}"
+@model EventManagement.Pages.Admin.NotificationDetailsModel
+@{
+    ViewData["Title"] = "Chi tiết thông báo";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card bg-dark text-white">
+                <div class="card-header bg-gold text-dark d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-bell me-2"></i>Chi tiết thông báo
+                    </h4>
+                    <a href="/Admin/Notifications" class="btn btn-dark">
+                        <i class="fas fa-arrow-left me-2"></i>Quay lại
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (Model.Notification != null)
+                    {
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div>
+                                        <h3>@Model.Notification.Title</h3>
+                                        <div class="text-muted">@Model.Notification.Subject</div>
+                                    </div>
+                                    <div class="text-end">
+                                        @{
+                                            var statusClass = Model.Notification.Status switch
+                                            {
+                                                "Sent" => "bg-success",
+                                                "Read" => "bg-info",
+                                                "Failed" => "bg-danger",
+                                                _ => "bg-secondary"
+                                            };
+                                        }
+                                        <span class="badge @statusClass">@Model.Notification.Status</span>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <div class="card bg-dark border-secondary h-100">
+                                            <div class="card-body">
+                                                <h6 class="card-title">
+                                                    <i class="fas fa-info-circle me-2"></i>Thông tin cơ bản
+                                                </h6>
+                                                <div class="mb-2">
+                                                    <strong>Loại thông báo:</strong>
+                                                    @{
+                                                        var typeClass = Model.Notification.NotificationType switch
+                                                        {
+                                                            "System" => "bg-secondary",
+                                                            "Event" => "bg-primary",
+                                                            "Registration" => "bg-success",
+                                                            "Feedback" => "bg-info",
+                                                            _ => "bg-secondary"
+                                                        };
+                                                    }
+                                                    <span class="badge @typeClass">@Model.Notification.NotificationType</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>Mức độ ưu tiên:</strong>
+                                                    @{
+                                                        var priorityClass = Model.Notification.Priority switch
+                                                        {
+                                                            "High" => "bg-danger",
+                                                            "Medium" => "bg-warning",
+                                                            "Low" => "bg-info",
+                                                            _ => "bg-secondary"
+                                                        };
+                                                    }
+                                                    <span class="badge @priorityClass">@Model.Notification.Priority</span>
+                                                </div>
+                                                @if (Model.Notification.Link != null)
+                                                {
+                                                    <div>
+                                                        <strong>Link:</strong>
+                                                        <a href="@Model.Notification.Link" class="text-gold" target="_blank">
+                                                            @Model.Notification.Link
+                                                        </a>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card bg-dark border-secondary h-100">
+                                            <div class="card-body">
+                                                <h6 class="card-title">
+                                                    <i class="fas fa-clock me-2"></i>Thời gian
+                                                </h6>
+                                                <div class="mb-2">
+                                                    <strong>Gửi lúc:</strong>
+                                                    @Model.Notification.SentAt.ToString("dd/MM/yyyy HH:mm")
+                                                </div>
+                                                @if (Model.Notification.ReadAt.HasValue)
+                                                {
+                                                    <div class="mb-2">
+                                                        <strong>Đọc lúc:</strong>
+                                                        @Model.Notification.ReadAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                                    </div>
+                                                }
+                                                @if (Model.Notification.ExpiresAt.HasValue)
+                                                {
+                                                    <div>
+                                                        <strong>Hết hạn lúc:</strong>
+                                                        @Model.Notification.ExpiresAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <div class="card bg-dark border-secondary h-100">
+                                            <div class="card-body">
+                                                <h6 class="card-title">
+                                                    <i class="fas fa-user me-2"></i>Người nhận
+                                                </h6>
+                                                <div>
+                                                    <a href="/Admin/UserDetails/@Model.Notification.UserId" class="text-gold">
+                                                        @Model.Notification.User.FullName
+                                                    </a>
+                                                </div>
+                                                <div class="text-muted">@Model.Notification.User.Email</div>
+                                                <div class="text-muted">@Model.Notification.User.PhoneNumber</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card bg-dark border-secondary h-100">
+                                            <div class="card-body">
+                                                <h6 class="card-title">
+                                                    <i class="fas fa-paper-plane me-2"></i>Người gửi
+                                                </h6>
+                                                <div>
+                                                    <a href="/Admin/UserDetails/@Model.Notification.SentBy" class="text-gold">
+                                                        @Model.Notification.SentByNavigation?.FullName
+                                                    </a>
+                                                </div>
+                                                <div class="text-muted">@Model.Notification.SentByNavigation?.Email</div>
+                                                <div class="text-muted">@Model.Notification.SentByNavigation?.PhoneNumber</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (Model.Notification.EventId.HasValue)
+                                {
+                                    <div class="card bg-dark border-secondary mb-4">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fas fa-calendar-alt me-2"></i>Sự kiện liên quan
+                                            </h6>
+                                            <div>
+                                                <a href="/Admin/Events/@Model.Notification.EventId" class="text-gold">
+                                                    @Model.Notification.Event?.EventName
+                                                </a>
+                                            </div>
+                                            <div class="text-muted">
+                                                <i class="fas fa-clock me-2"></i>@Model.Notification.Event?.StartDate.ToString("dd/MM/yyyy HH:mm") - @Model.Notification.Event?.EndDate.ToString("dd/MM/yyyy HH:mm")
+                                            </div>
+                                            <div class="text-muted">
+                                                <i class="fas fa-map-marker-alt me-2"></i>@Model.Notification.Event?.Location
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="card bg-dark border-secondary mb-4">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-envelope me-2"></i>Nội dung
+                                        </h6>
+                                        <p class="mb-0">@Model.Notification.Body</p>
+                                    </div>
+                                </div>
+
+                                @if (Model.Notification.Status == "Failed")
+                                {
+                                    <div class="card bg-dark border-secondary mb-4">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="fas fa-exclamation-circle me-2"></i>Lỗi
+                                            </h6>
+                                            <div class="text-danger">@Model.Notification.ErrorMessage</div>
+                                            <div class="text-muted mt-2">
+                                                Số lần thử lại: @Model.Notification.RetryCount
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="d-flex gap-2">
+                                    @if (Model.Notification.Status == "Failed")
+                                    {
+                                        <button type="button" class="btn btn-info"
+                                                onclick="resendNotification(@Model.Notification.NotificationId)">
+                                            <i class="fas fa-redo me-2"></i>Gửi lại
+                                        </button>
+                                    }
+                                    <button type="button" class="btn btn-danger"
+                                            onclick="deleteNotification(@Model.Notification.NotificationId)">
+                                        <i class="fas fa-trash me-2"></i>Xóa
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                            <h5>Không tìm thấy thông báo</h5>
+                            <a href="/Admin/Notifications" class="btn btn-outline-secondary mt-3">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function resendNotification(notificationId) {
+            if (confirm('Bạn có chắc chắn muốn gửi lại thông báo này?')) {
+                fetch(`/Admin/Notifications?handler=Resend`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ notificationId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                    }
+                });
+            }
+        }
+
+        function deleteNotification(notificationId) {
+            if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
+                fetch(`/Admin/Notifications?handler=Delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ notificationId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/Admin/Notifications';
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                    }
+                });
+            }
+        }
+    </script>
+} 

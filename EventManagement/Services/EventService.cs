@@ -1,6 +1,7 @@
 using EventManagement.Models;
 using EventManagement.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace EventManagement.Services;
 
@@ -8,13 +9,16 @@ public class EventService
 {
     private readonly EventManagementDbContext _context;
     private readonly IWebHostEnvironment _environment;
-    private readonly IEmailService _emailService; // Added this field
+    private readonly ILogger<EventService> _logger;
 
-    public EventService(EventManagementDbContext context, IWebHostEnvironment environment, IEmailService emailService) // Added emailService to constructor
+    public EventService(
+        EventManagementDbContext context,
+        IWebHostEnvironment environment,
+        ILogger<EventService> logger)
     {
         _context = context;
         _environment = environment;
-        _emailService = emailService; // Initialize emailService
+        _logger = logger;
     }
 
     public async Task<List<Event>> GetAllEventsAsync(bool includeDeleted = false)
@@ -443,52 +447,25 @@ public class EventService
                 .Where(r => !r.IsDeleted && r.Status == "Registered")
                 .ToList();
 
-            foreach (var registration in registrations)
-            {
-                var attendee = registration.Attendee;
-                var daysUntilEvent = (evt.StartDate - now).Days;
+            // TODO: Implement email sending using MailKit in EmailService
+            _logger.LogInformation("Found {Count} registrations to send reminders for event {EventName}", 
+                registrations.Count, evt.EventName);
+        }
+    }
 
-                // Send reminder 1 day before
-                if (evt.StartDate.Date == tomorrow.Date)
-                {
-                    var emailBody = $@"<p>Chào {attendee.FullName},</p>
-<p>Nhắc nhở: Sự kiện <strong>{evt.EventName}</strong> sẽ diễn ra vào ngày mai.</p>
-<p>Thông tin sự kiện:</p>
-<ul>
-    <li>Thời gian: {evt.StartDate:dd/MM/yyyy HH:mm}</li>
-    <li>Địa điểm: {evt.Location}</li>
-    <li>Địa chỉ: {evt.Address}</li>
-</ul>
-<p>Vui lòng đến đúng giờ và mang theo QR code để check-in.</p>
-<p>Trân trọng,<br>Ban tổ chức</p>";
-
-                    await _emailService.SendEmailAsync(
-                        attendee.Email,
-                        $"Nhắc nhở: Sự kiện {evt.EventName} diễn ra vào ngày mai",
-                        emailBody,
-                        attendee.FullName);
-                }
-                // Send reminder 1 week before
-                else if (evt.StartDate.Date == nextWeek.Date)
-                {
-                    var emailBody = $@"<p>Chào {attendee.FullName},</p>
-<p>Nhắc nhở: Sự kiện <strong>{evt.EventName}</strong> sẽ diễn ra sau 1 tuần nữa.</p>
-<p>Thông tin sự kiện:</p>
-<ul>
-    <li>Thời gian: {evt.StartDate:dd/MM/yyyy HH:mm}</li>
-    <li>Địa điểm: {evt.Location}</li>
-    <li>Địa chỉ: {evt.Address}</li>
-</ul>
-<p>Nếu bạn không thể tham gia, vui lòng hủy đăng ký trước ngày diễn ra sự kiện.</p>
-<p>Trân trọng,<br>Ban tổ chức</p>";
-
-                    await _emailService.SendEmailAsync(
-                        attendee.Email,
-                        $"Nhắc nhở: Sự kiện {evt.EventName} diễn ra sau 1 tuần",
-                        emailBody,
-                        attendee.FullName);
-                }
-            }
+    public async Task<List<Event>> GetEventsAsync()
+    {
+        try
+        {
+            return await _context.Events
+                .Where(e => !e.IsDeleted)
+                .OrderByDescending(e => e.StartDate)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting events list");
+            throw;
         }
     }
 } 

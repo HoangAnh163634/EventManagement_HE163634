@@ -2,47 +2,69 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using EventManagement.Models;
 using EventManagement.Services;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace EventManagement.Pages.Events;
 
 public class FeedbackModel : PageModel
 {
-    private readonly EventService _eventService;
-    private readonly RegistrationService _registrationService;
+    private readonly EventManagementDbContext _context;
+    private readonly ILogger<FeedbackModel> _logger;
 
-    public FeedbackModel(
-        EventService eventService,
-        RegistrationService registrationService)
+    public FeedbackModel(EventManagementDbContext context, ILogger<FeedbackModel> logger)
     {
-        _eventService = eventService;
-        _registrationService = registrationService;
+        _context = context;
+        _logger = logger;
     }
 
     public Event? Event { get; set; }
     public bool CanSubmitFeedback { get; set; }
 
-    public async Task<IActionResult> OnGetAsync(int id)
+    public async Task<IActionResult> OnGetAsync(int? id)
     {
-        var userId = HttpContext.Session.GetInt32("UserId");
-        if (userId == null)
+        if (id == null)
         {
-            TempData["ErrorMessage"] = "Bạn cần đăng nhập để xem đánh giá.";
-            return RedirectToPage("/Account/Login");
+            return NotFound();
         }
 
-        Event = await _eventService.GetEventByIdAsync(id);
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var registration = await _context.Registrations
+            .Include(r => r.Event)
+            .Include(r => r.Feedback)
+            .FirstOrDefaultAsync(r => r.RegistrationId == id && r.AttendeeId == userId);
+
+        if (registration == null)
+        {
+            return NotFound();
+        }
+
+        if (registration.Status != "Attended")
+        {
+            return RedirectToPage("/Events/MyRegistrations");
+        }
+
+        if (registration.Feedback != null)
+        {
+            return RedirectToPage("/Events/MyRegistrations");
+        }
+
+        Event = await _context.Events
+            .Include(e => e.Registrations)
+            .FirstOrDefaultAsync(e => e.EventId == registration.EventId);
+
         if (Event == null)
         {
-            return Page();
+            return NotFound();
         }
 
         // Check if user can submit feedback
-        var registration = Event.Registrations
-            .FirstOrDefault(r => r.AttendeeId == userId && !r.IsDeleted);
-
-        CanSubmitFeedback = registration != null &&
-                           registration.Status == "CheckedIn" &&
-                           !registration.Feedback.Any() &&
+        CanSubmitFeedback = registration.Status == "CheckedIn" &&
                            Event.EndDate <= DateTime.UtcNow;
 
         return Page();
@@ -50,28 +72,25 @@ public class FeedbackModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(int id, int rating, string comments, string? suggestions, bool wouldRecommend, bool isPublic)
     {
-        var userId = HttpContext.Session.GetInt32("UserId");
-        if (userId == null)
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
         {
             return RedirectToPage("/Account/Login");
         }
 
         try
         {
-            var registration = await _registrationService.GetRegistrationByIdAsync(id);
+            var registration = await _context.Registrations
+                .Include(r => r.Event)
+                .FirstOrDefaultAsync(r => r.RegistrationId == id && r.AttendeeId == userId);
+
             if (registration == null)
             {
                 TempData["ErrorMessage"] = "Không tìm thấy đăng ký.";
                 return RedirectToPage("/Events/Details", new { id });
             }
 
-            if (registration.AttendeeId != userId)
-            {
-                TempData["ErrorMessage"] = "Bạn không có quyền đánh giá cho đăng ký này.";
-                return RedirectToPage("/Events/Details", new { id });
-            }
-
-            if (registration.Status != "CheckedIn")
+            if (registration.Status != "Attended")
             {
                 TempData["ErrorMessage"] = "Bạn cần check-in trước khi đánh giá.";
                 return RedirectToPage("/Events/Details", new { id });
@@ -83,7 +102,7 @@ public class FeedbackModel : PageModel
                 return RedirectToPage("/Events/Details", new { id });
             }
 
-            if (registration.Feedback.Any())
+            if (registration.Feedback != null)
             {
                 TempData["ErrorMessage"] = "Bạn đã đánh giá sự kiện này.";
                 return RedirectToPage("/Events/Details", new { id });
@@ -93,7 +112,7 @@ public class FeedbackModel : PageModel
             {
                 RegistrationId = registration.RegistrationId,
                 EventId = registration.EventId,
-                AttendeeId = userId.Value,
+                AttendeeId = userId,
                 Rating = rating,
                 Comments = comments,
                 Suggestions = suggestions,
@@ -112,8 +131,9 @@ public class FeedbackModel : PageModel
             TempData["SuccessMessage"] = "Cảm ơn bạn đã đánh giá sự kiện!";
             return RedirectToPage("/Events/Details", new { id = registration.EventId });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error submitting feedback for event ID: {EventId}", id);
             TempData["ErrorMessage"] = "Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.";
             return RedirectToPage("/Events/Details", new { id });
         }

@@ -70,18 +70,15 @@
                                                     </p>
                                                 }
                                             }
+                                            else if (registration.Status == "Attended" && registration.Feedback == null)
+                                            {
+                                                <a href="/Events/Feedback/@registration.RegistrationId" class="btn btn-primary">Give Feedback</a>
+                                            }
                                             else if (registration.Status == "CheckedIn")
                                             {
                                                 <p class="text-muted mb-2">
                                                     <i class="fas fa-clock me-2"></i>Check-in: @registration.CheckInTime?.ToString("dd/MM/yyyy HH:mm")
                                                 </p>
-                                                @if (!registration.Feedback.Any())
-                                                {
-                                                    <button type="button" class="btn btn-outline-gold btn-sm" 
-                                                            onclick="showFeedbackModal(@registration.RegistrationId, '@registration.Event.EventName')">
-                                                        <i class="fas fa-star me-2"></i>Đánh giá
-                                                    </button>
-                                                }
                                             }
                                         </div>
                                     </div>
@@ -124,7 +121,7 @@
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="text-muted">Đã đánh giá:</span>
-                        <span class="text-white">@Model.Registrations.Count(r => r.Feedback.Any())</span>
+                        <span class="text-white">@Model.Registrations.Count(r => r.Feedback != null)</span>
                     </div>
                 </div>
             </div>

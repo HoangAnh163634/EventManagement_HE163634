@@ -8,10 +8,12 @@ namespace EventManagement.Pages.Events;
 public class CreateModel : PageModel
 {
     private readonly EventService _eventService;
+    private readonly ILogger<CreateModel> _logger;
 
-    public CreateModel(EventService eventService)
+    public CreateModel(EventService eventService, ILogger<CreateModel> logger)
     {
         _eventService = eventService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -70,7 +72,8 @@ public class CreateModel : PageModel
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError(string.Empty, "Có lỗi xảy ra khi tạo sự kiện. Vui lòng thử lại.");
+            _logger.LogError(ex, "Error creating event");
+            TempData["ErrorMessage"] = $"Có lỗi xảy ra khi tạo sự kiện: {ex.Message}";
             Event.EventTypes = await _eventService.GetEventTypesAsync();
             return Page();
         }

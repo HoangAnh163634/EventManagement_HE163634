@@ -9,24 +9,24 @@ using System.Linq;
 
 namespace EventManagement.Pages.Admin;
 
-public class EventsModel : PageModel
+public class FeedbacksModel : PageModel
 {
     private readonly AdminService _adminService;
     private readonly EventService _eventService;
-    private readonly ILogger<EventsModel> _logger;
+    private readonly ILogger<FeedbacksModel> _logger;
 
-    public EventsModel(
+    public FeedbacksModel(
         AdminService adminService,
         EventService eventService,
-        ILogger<EventsModel> logger)
+        ILogger<FeedbacksModel> logger)
     {
         _adminService = adminService;
         _eventService = eventService;
         _logger = logger;
     }
 
+    public List<Feedback> Feedbacks { get; set; } = new();
     public List<Event> Events { get; set; } = new();
-    public List<EventType> EventTypes { get; set; } = new();
     public int TotalItems { get; set; }
     public int CurrentPage { get; set; } = 1;
     public int PageSize { get; set; } = 10;
@@ -36,16 +36,16 @@ public class EventsModel : PageModel
     public string? SearchTerm { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public int? EventTypeId { get; set; }
+    public int? EventId { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public string? Status { get; set; }
+    public int? Rating { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public DateTime? StartDate { get; set; }
+    public bool? IsApproved { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public DateTime? EndDate { get; set; }
+    public bool? IsPublic { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public string SortBy { get; set; } = "date";
@@ -68,29 +68,29 @@ public class EventsModel : PageModel
                 return RedirectToPage("/Index");
             }
 
-            // Lấy danh sách loại sự kiện cho filter
-            EventTypes = await _eventService.GetEventTypesAsync(includeInactive: false);
+            // Lấy danh sách sự kiện cho filter
+            Events = await _eventService.GetEventsAsync();
 
-            // Lấy danh sách sự kiện theo filter
+            // Lấy danh sách feedback theo filter
             CurrentPage = Page;
-            var (events, totalItems) = await _adminService.GetEventsAsync(
-                SearchTerm, EventTypeId, Status, StartDate, EndDate,
+            var (feedbacks, totalItems) = await _adminService.GetFeedbacksAsync(
+                SearchTerm, EventId, Rating, IsApproved, IsPublic,
                 SortBy, SortOrder, CurrentPage, PageSize);
 
-            Events = events;
+            Feedbacks = feedbacks;
             TotalItems = totalItems;
 
             return Page();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading events list");
-            TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải danh sách sự kiện.";
+            _logger.LogError(ex, "Error loading feedbacks list");
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải danh sách feedback.";
             return RedirectToPage("/Index");
         }
     }
 
-    public async Task<IActionResult> OnPostCancelEventAsync([FromQuery] int eventId)
+    public async Task<IActionResult> OnPostUpdateStatusAsync([FromBody] UpdateFeedbackStatusModel model)
     {
         try
         {
@@ -100,15 +100,20 @@ public class EventsModel : PageModel
                 return new JsonResult(new { success = false, message = "Không có quyền truy cập." });
             }
 
-            await _adminService.UpdateEventStatusAsync(eventId, isCancelled: true);
+            await _adminService.UpdateFeedbackStatusAsync(model.FeedbackId, model.IsApproved, model.IsPublic);
             
-            _logger.LogInformation("Event {EventId} cancelled by admin", eventId);
+            _logger.LogInformation(
+                "Feedback {FeedbackId} status updated by admin. IsApproved: {IsApproved}, IsPublic: {IsPublic}",
+                model.FeedbackId,
+                model.IsApproved,
+                model.IsPublic);
+
             return new JsonResult(new { success = true });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error cancelling event {EventId}", eventId);
-            return new JsonResult(new { success = false, message = "Có lỗi xảy ra khi hủy sự kiện." });
+            _logger.LogError(ex, "Error updating feedback status");
+            return new JsonResult(new { success = false, message = "Có lỗi xảy ra khi cập nhật trạng thái." });
         }
     }
 
@@ -120,10 +125,10 @@ public class EventsModel : PageModel
             { "sortBy", column },
             { "sortOrder", newOrder },
             { "searchTerm", SearchTerm },
-            { "eventTypeId", EventTypeId?.ToString() },
-            { "status", Status },
-            { "startDate", StartDate?.ToString("yyyy-MM-dd") },
-            { "endDate", EndDate?.ToString("yyyy-MM-dd") },
+            { "eventId", EventId?.ToString() },
+            { "rating", Rating?.ToString() },
+            { "isApproved", IsApproved?.ToString() },
+            { "isPublic", IsPublic?.ToString() },
             { "page", "1" }
         };
 
@@ -143,4 +148,11 @@ public class EventsModel : PageModel
         }
         return Request.Path + queryParams;
     }
+}
+
+public class UpdateFeedbackStatusModel
+{
+    public int FeedbackId { get; set; }
+    public bool IsApproved { get; set; }
+    public bool IsPublic { get; set; }
 } 

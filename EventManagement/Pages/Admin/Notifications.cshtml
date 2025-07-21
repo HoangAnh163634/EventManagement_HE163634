@@ -1,0 +1,419 @@
+@page
+@model EventManagement.Pages.Admin.NotificationsModel
+@{
+    ViewData["Title"] = "Quản lý thông báo";
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-gold mb-0">
+            <i class="fas fa-bell me-2"></i>Quản lý thông báo
+        </h2>
+        <button type="button" class="btn btn-gold" data-bs-toggle="modal" data-bs-target="#createModal">
+            <i class="fas fa-plus me-2"></i>Gửi thông báo
+        </button>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card bg-dark border-gold mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary">
+                            <i class="fas fa-search text-gold"></i>
+                        </span>
+                        <input type="text" name="searchTerm" class="form-control bg-dark text-white border-secondary" 
+                               placeholder="Tìm kiếm nội dung..." value="@Model.SearchTerm">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select name="eventId" class="form-select bg-dark text-white border-secondary">
+                        <option value="">Tất cả sự kiện</option>
+                        @foreach (var evt in Model.Events)
+                        {
+                            <option value="@evt.EventId" selected="@(Model.EventId == evt.EventId)">
+                                @evt.EventName
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="notificationType" class="form-select bg-dark text-white border-secondary">
+                        <option value="">Tất cả loại</option>
+                        <option value="System" selected="@(Model.NotificationType == "System")">Hệ thống</option>
+                        <option value="Event" selected="@(Model.NotificationType == "Event")">Sự kiện</option>
+                        <option value="Registration" selected="@(Model.NotificationType == "Registration")">Đăng ký</option>
+                        <option value="Feedback" selected="@(Model.NotificationType == "Feedback")">Feedback</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="priority" class="form-select bg-dark text-white border-secondary">
+                        <option value="">Tất cả mức độ</option>
+                        <option value="High" selected="@(Model.Priority == "High")">Cao</option>
+                        <option value="Medium" selected="@(Model.Priority == "Medium")">Trung bình</option>
+                        <option value="Low" selected="@(Model.Priority == "Low")">Thấp</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select bg-dark text-white border-secondary">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Sent" selected="@(Model.Status == "Sent")">Đã gửi</option>
+                        <option value="Read" selected="@(Model.Status == "Read")">Đã đọc</option>
+                        <option value="Failed" selected="@(Model.Status == "Failed")">Lỗi</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-gold w-100">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notifications Table -->
+    <div class="card bg-dark border-gold">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>
+                                <a href="@Model.GetSortUrl("title")" class="text-white text-decoration-none">
+                                    Tiêu đề
+                                    @if (Model.SortBy == "title")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@Model.GetSortUrl("user")" class="text-white text-decoration-none">
+                                    Người nhận
+                                    @if (Model.SortBy == "user")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>Loại</th>
+                            <th>Mức độ</th>
+                            <th>
+                                <a href="@Model.GetSortUrl("date")" class="text-white text-decoration-none">
+                                    Thời gian
+                                    @if (Model.SortBy == "date")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var notification in Model.Notifications)
+                        {
+                            <tr>
+                                <td>
+                                    <div>@notification.Title</div>
+                                    <div class="text-muted small">@notification.Subject</div>
+                                </td>
+                                <td>
+                                    <a href="/Admin/UserDetails/@notification.UserId" class="text-gold">
+                                        @notification.User.FullName
+                                    </a>
+                                    <div class="text-muted small">@notification.User.Email</div>
+                                </td>
+                                <td>
+                                    @{
+                                        var typeClass = notification.NotificationType switch
+                                        {
+                                            "System" => "bg-secondary",
+                                            "Event" => "bg-primary",
+                                            "Registration" => "bg-success",
+                                            "Feedback" => "bg-info",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @typeClass">@notification.NotificationType</span>
+                                </td>
+                                <td>
+                                    @{
+                                        var priorityClass = notification.Priority switch
+                                        {
+                                            "High" => "bg-danger",
+                                            "Medium" => "bg-warning",
+                                            "Low" => "bg-info",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @priorityClass">@notification.Priority</span>
+                                </td>
+                                <td>
+                                    <div>@notification.SentAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                    @if (notification.ReadAt.HasValue)
+                                    {
+                                        <div class="text-muted small">
+                                            Đã đọc: @notification.ReadAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    @{
+                                        var statusClass = notification.Status switch
+                                        {
+                                            "Sent" => "bg-success",
+                                            "Read" => "bg-info",
+                                            "Failed" => "bg-danger",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @statusClass">@notification.Status</span>
+                                    @if (notification.Status == "Failed")
+                                    {
+                                        <div class="text-danger small">
+                                            <i class="fas fa-exclamation-circle me-1"></i>@notification.ErrorMessage
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="/Admin/Notifications/@notification.NotificationId" class="btn btn-sm btn-outline-gold me-2">
+                                        <i class="fas fa-eye me-1"></i>Chi tiết
+                                    </a>
+                                    @if (notification.Status == "Failed")
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-info me-2"
+                                                onclick="resendNotification(@notification.NotificationId)">
+                                            <i class="fas fa-redo me-1"></i>Gửi lại
+                                        </button>
+                                    }
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="deleteNotification(@notification.NotificationId)">
+                                        <i class="fas fa-trash me-1"></i>Xóa
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <div class="text-muted">
+                        Hiển thị @(((Model.CurrentPage - 1) * Model.PageSize) + 1) - @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems)) 
+                        trên tổng số @Model.TotalItems thông báo
+                    </div>
+                    <nav>
+                        <ul class="pagination mb-0">
+                            @if (Model.CurrentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link bg-dark text-gold border-gold" 
+                                       href="@Model.GetPageUrl(Model.CurrentPage - 1)">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            }
+
+                            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link bg-dark text-gold border-gold" 
+                                       href="@Model.GetPageUrl(i)">@i</a>
+                                </li>
+                            }
+
+                            @if (Model.CurrentPage < Model.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link bg-dark text-gold border-gold" 
+                                       href="@Model.GetPageUrl(Model.CurrentPage + 1)">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Gửi thông báo mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Loại thông báo</label>
+                                <select id="notificationType" class="form-select bg-dark text-white border-secondary">
+                                    <option value="System">Hệ thống</option>
+                                    <option value="Event">Sự kiện</option>
+                                    <option value="Registration">Đăng ký</option>
+                                    <option value="Feedback">Feedback</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mức độ ưu tiên</label>
+                                <select id="priority" class="form-select bg-dark text-white border-secondary">
+                                    <option value="High">Cao</option>
+                                    <option value="Medium">Trung bình</option>
+                                    <option value="Low">Thấp</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Sự kiện liên quan</label>
+                                <select id="eventId" class="form-select bg-dark text-white border-secondary">
+                                    <option value="">Không có</option>
+                                    @foreach (var evt in Model.Events)
+                                    {
+                                        <option value="@evt.EventId">@evt.EventName</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Người nhận</label>
+                                <select id="userId" class="form-select bg-dark text-white border-secondary">
+                                    @foreach (var user in Model.Users)
+                                    {
+                                        <option value="@user.UserId">@user.FullName (@user.Email)</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Tiêu đề</label>
+                                <input type="text" id="title" class="form-control bg-dark text-white border-secondary">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Chủ đề</label>
+                                <input type="text" id="subject" class="form-control bg-dark text-white border-secondary">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Nội dung</label>
+                                <textarea id="body" class="form-control bg-dark text-white border-secondary" rows="5"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Link (nếu có)</label>
+                                <input type="text" id="link" class="form-control bg-dark text-white border-secondary">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-gold" onclick="sendNotification()">
+                    <i class="fas fa-paper-plane me-2"></i>Gửi thông báo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function resendNotification(notificationId) {
+            if (confirm('Bạn có chắc chắn muốn gửi lại thông báo này?')) {
+                fetch(`/Admin/Notifications?handler=Resend`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ notificationId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                    }
+                });
+            }
+        }
+
+        function deleteNotification(notificationId) {
+            if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
+                fetch(`/Admin/Notifications?handler=Delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ notificationId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                    }
+                });
+            }
+        }
+
+        function sendNotification() {
+            const data = {
+                notificationType: document.getElementById('notificationType').value,
+                priority: document.getElementById('priority').value,
+                eventId: document.getElementById('eventId').value || null,
+                userId: document.getElementById('userId').value,
+                title: document.getElementById('title').value,
+                subject: document.getElementById('subject').value,
+                body: document.getElementById('body').value,
+                link: document.getElementById('link').value || null
+            };
+
+            if (!data.title || !data.subject || !data.body) {
+                alert('Vui lòng nhập đầy đủ thông tin bắt buộc.');
+                return;
+            }
+
+            fetch(`/Admin/Notifications?handler=Create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                }
+            });
+        }
+    </script>
+} 

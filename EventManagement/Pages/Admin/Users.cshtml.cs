@@ -50,7 +50,7 @@ public class UsersModel : PageModel
     public string SortOrder { get; set; } = "desc";
 
     [BindProperty(SupportsGet = true)]
-    public int Page { get; set; } = 1;
+    public new int Page { get; set; } = 1;
 
     public async Task<IActionResult> OnGetAsync()
     {

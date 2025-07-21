@@ -1,7 +1,8 @@
 @page
 @model EventManagement.Pages.Events.IndexModel
 @{
-    ViewData["Title"] = "Sự kiện";
+    ViewData["Title"] = "Events";
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 }
 
 <div class="container py-5">
@@ -133,15 +134,16 @@
             }
         </h4>
 
-        @if (User.Identity?.IsAuthenticated == true && Context.Session.GetString("UserEmailVerified") == "true")
+        @if (User.Identity?.IsAuthenticated == true)
         {
-            var userRole = Context.Session.GetString("UserRole");
-            if (userRole == "Admin" || userRole == "Organizer")
-            {
-                <a href="/Events/Create" class="btn btn-gold">
-                    <i class="fas fa-plus me-2"></i>Tạo sự kiện mới
-                </a>
-            }
+            <div>
+                @if (Model.Events.Any(e => e.OrganizerId.ToString() == userId))
+                {
+                    <a href="/Events/Create" class="btn btn-gold">
+                        <i class="fas fa-plus me-2"></i>Tạo sự kiện mới
+                    </a>
+                }
+            </div>
         }
     </div>
 

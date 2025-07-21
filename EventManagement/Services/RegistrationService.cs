@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using QRCoder;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Drawing.Drawing2D;
 
 namespace EventManagement.Services;
 
@@ -220,9 +221,9 @@ public class RegistrationService
     private async Task<Qrcode> GenerateQrCodeAsync(Registration registration)
     {
         var qrCodeValue = $"REG_{registration.RegistrationId}_{Guid.NewGuid():N}";
-        var qrGenerator = new QRCodeGenerator();
-        var qrCodeData = qrGenerator.CreateQrCode(qrCodeValue, QRCodeGenerator.ECCLevel.Q);
-        var qrCode = new QRCode(qrCodeData);
+        using var qrGenerator = new QRCodeGenerator();
+        using var qrCodeData = qrGenerator.CreateQrCode(qrCodeValue, QRCodeGenerator.ECCLevel.Q);
+        using var qrCode = new BitmapByteQRCode(qrCodeData);
         var qrCodeImage = qrCode.GetGraphic(20);
 
         var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "qrcodes");
@@ -234,10 +235,7 @@ public class RegistrationService
         var fileName = $"qr_{registration.RegistrationId}_{DateTime.UtcNow:yyyyMMddHHmmss}.png";
         var filePath = Path.Combine(uploadsFolder, fileName);
 
-        await using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            qrCodeImage.Save(stream, ImageFormat.Png);
-        }
+        await File.WriteAllBytesAsync(filePath, qrCodeImage);
 
         return new Qrcode
         {

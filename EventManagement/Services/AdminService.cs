@@ -590,4 +590,1003 @@ public class AdminService
         var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
         return Convert.ToBase64String(hashedBytes);
     }
+
+    public async Task<(List<Registration>, int)> GetRegistrationsAsync(
+        string? searchTerm = null,
+        int? eventId = null,
+        string? status = null,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        string sortBy = "date",
+        string sortOrder = "desc",
+        int page = 1,
+        int pageSize = 10)
+    {
+        try
+        {
+            var query = _context.Registrations
+                .Include(r => r.Event)
+                .Include(r => r.Attendee)
+                .Include(r => r.CheckInByNavigation)
+                .Where(r => !r.IsDeleted)
+                .AsQueryable();
+
+            // Tìm kiếm
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.ToLower();
+                query = query.Where(r => 
+                    r.Attendee.FullName.ToLower().Contains(searchTerm) ||
+                    r.Attendee.Email.ToLower().Contains(searchTerm));
+            }
+
+            // Lọc theo sự kiện
+            if (eventId.HasValue)
+            {
+                query = query.Where(r => r.EventId == eventId);
+            }
+
+            // Lọc theo trạng thái
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(r => r.Status == status);
+            }
+
+            // Lọc theo ngày
+            if (startDate.HasValue)
+            {
+                query = query.Where(r => r.CreatedAt.Date >= startDate.Value.Date);
+            }
+            if (endDate.HasValue)
+            {
+                query = query.Where(r => r.CreatedAt.Date <= endDate.Value.Date);
+            }
+
+            // Đếm tổng số item
+            var totalItems = await query.CountAsync();
+
+            // Sắp xếp
+            query = sortBy.ToLower() switch
+            {
+                "attendee" => sortOrder == "asc"
+                    ? query.OrderBy(r => r.Attendee.FullName)
+                    : query.OrderByDescending(r => r.Attendee.FullName),
+                "event" => sortOrder == "asc"
+                    ? query.OrderBy(r => r.Event.EventName)
+                    : query.OrderByDescending(r => r.Event.EventName),
+                _ => sortOrder == "asc"
+                    ? query.OrderBy(r => r.CreatedAt)
+                    : query.OrderByDescending(r => r.CreatedAt)
+            };
+
+            // Phân trang
+            var registrations = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (registrations, totalItems);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting registrations list");
+            throw;
+        }
+    }
+
+    public async Task<Registration?> GetRegistrationByIdAsync(int registrationId)
+    {
+        try
+        {
+            return await _context.Registrations
+                .Include(r => r.Event)
+                .Include(r => r.Attendee)
+                .Include(r => r.CheckInByNavigation)
+                .Include(r => r.Qrcode)
+                .Include(r => r.Feedback)
+                .FirstOrDefaultAsync(r => r.RegistrationId == registrationId && !r.IsDeleted);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting registration {RegistrationId}", registrationId);
+            throw;
+        }
+    }
+
+    public async Task UpdateRegistrationStatusAsync(int registrationId, string status)
+    {
+        try
+        {
+            var registration = await _context.Registrations
+                .Include(r => r.Event)
+                .FirstOrDefaultAsync(r => r.RegistrationId == registrationId);
+
+            if (registration == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy đăng ký.");
+            }
+
+            if (registration.IsDeleted)
+            {
+                throw new InvalidOperationException("Đăng ký đã bị xóa.");
+            }
+
+            if (registration.Status == status)
+            {
+                return;
+            }
+
+            if (registration.Status == "CheckedIn")
+            {
+                throw new InvalidOperationException("Không thể thay đổi trạng thái của đăng ký đã check-in.");
+            }
+
+            if (status == "Confirmed" && registration.Event.MaxAttendees.HasValue)
+            {
+                var confirmedCount = await _context.Registrations
+                    .CountAsync(r => r.EventId == registration.EventId 
+                        && !r.IsDeleted 
+                        && (r.Status == "Confirmed" || r.Status == "CheckedIn"));
+
+                if (confirmedCount >= registration.Event.MaxAttendees)
+                {
+                    throw new InvalidOperationException("Sự kiện đã đạt số lượng người tham gia tối đa.");
+                }
+            }
+
+            registration.Status = status;
+            registration.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating registration {RegistrationId} status", registrationId);
+            throw;
+        }
+    }
+
+    public async Task CheckInRegistrationAsync(int registrationId, int checkInBy, string checkInMethod, string checkInLocation)
+    {
+        try
+        {
+            var registration = await _context.Registrations
+                .Include(r => r.Event)
+                .FirstOrDefaultAsync(r => r.RegistrationId == registrationId);
+
+            if (registration == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy đăng ký.");
+            }
+
+            if (registration.IsDeleted)
+            {
+                throw new InvalidOperationException("Đăng ký đã bị xóa.");
+            }
+
+            if (registration.Status != "Confirmed")
+            {
+                throw new InvalidOperationException("Chỉ có thể check-in cho đăng ký đã được duyệt.");
+            }
+
+            if (registration.CheckInTime.HasValue)
+            {
+                throw new InvalidOperationException("Đăng ký đã được check-in trước đó.");
+            }
+
+            var now = DateTime.Now;
+            if (now < registration.Event.StartDate.AddHours(-1))
+            {
+                throw new InvalidOperationException("Chỉ có thể check-in trong vòng 1 giờ trước khi sự kiện bắt đầu.");
+            }
+
+            if (now > registration.Event.EndDate)
+            {
+                throw new InvalidOperationException("Không thể check-in sau khi sự kiện kết thúc.");
+            }
+
+            registration.Status = "CheckedIn";
+            registration.CheckInTime = now;
+            registration.CheckInBy = checkInBy;
+            registration.CheckInMethod = checkInMethod;
+            registration.CheckInLocation = checkInLocation;
+            registration.UpdatedAt = now;
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking in registration {RegistrationId}", registrationId);
+            throw;
+        }
+    }
+
+    public async Task<(List<Feedback>, int)> GetFeedbacksAsync(
+        string? searchTerm = null,
+        int? eventId = null,
+        int? rating = null,
+        bool? isApproved = null,
+        bool? isPublic = null,
+        string sortBy = "date",
+        string sortOrder = "desc",
+        int page = 1,
+        int pageSize = 10)
+    {
+        try
+        {
+            var query = _context.Feedbacks
+                .Include(f => f.Event)
+                .Include(f => f.Attendee)
+                .AsQueryable();
+
+            // Tìm kiếm
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.ToLower();
+                query = query.Where(f => 
+                    (f.Comments != null && f.Comments.ToLower().Contains(searchTerm)) ||
+                    (f.Suggestions != null && f.Suggestions.ToLower().Contains(searchTerm)));
+            }
+
+            // Lọc theo sự kiện
+            if (eventId.HasValue)
+            {
+                query = query.Where(f => f.EventId == eventId);
+            }
+
+            // Lọc theo đánh giá
+            if (rating.HasValue)
+            {
+                query = query.Where(f => f.Rating == rating);
+            }
+
+            // Lọc theo trạng thái duyệt
+            if (isApproved.HasValue)
+            {
+                query = query.Where(f => f.IsApproved == isApproved);
+            }
+
+            // Lọc theo trạng thái hiển thị
+            if (isPublic.HasValue)
+            {
+                query = query.Where(f => f.IsPublic == isPublic);
+            }
+
+            // Đếm tổng số item
+            var totalItems = await query.CountAsync();
+
+            // Sắp xếp
+            query = sortBy.ToLower() switch
+            {
+                "event" => sortOrder == "asc"
+                    ? query.OrderBy(f => f.Event.EventName)
+                    : query.OrderByDescending(f => f.Event.EventName),
+                "attendee" => sortOrder == "asc"
+                    ? query.OrderBy(f => f.Attendee.FullName)
+                    : query.OrderByDescending(f => f.Attendee.FullName),
+                "rating" => sortOrder == "asc"
+                    ? query.OrderBy(f => f.Rating)
+                    : query.OrderByDescending(f => f.Rating),
+                _ => sortOrder == "asc"
+                    ? query.OrderBy(f => f.SubmittedAt)
+                    : query.OrderByDescending(f => f.SubmittedAt)
+            };
+
+            // Phân trang
+            var feedbacks = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (feedbacks, totalItems);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting feedbacks list");
+            throw;
+        }
+    }
+
+    public async Task<Feedback?> GetFeedbackByIdAsync(int feedbackId)
+    {
+        try
+        {
+            return await _context.Feedbacks
+                .Include(f => f.Event)
+                .Include(f => f.Attendee)
+                .Include(f => f.Registration)
+                .FirstOrDefaultAsync(f => f.FeedbackId == feedbackId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting feedback {FeedbackId}", feedbackId);
+            throw;
+        }
+    }
+
+    public async Task UpdateFeedbackStatusAsync(int feedbackId, bool isApproved, bool isPublic)
+    {
+        try
+        {
+            var feedback = await _context.Feedbacks.FindAsync(feedbackId);
+            if (feedback == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy feedback.");
+            }
+
+            feedback.IsApproved = isApproved;
+            feedback.IsPublic = isPublic;
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating feedback {FeedbackId} status", feedbackId);
+            throw;
+        }
+    }
+
+    public async Task<(List<Notification>, int)> GetNotificationsAsync(
+        string? searchTerm = null,
+        int? eventId = null,
+        string? notificationType = null,
+        string? priority = null,
+        string? status = null,
+        string sortBy = "date",
+        string sortOrder = "desc",
+        int page = 1,
+        int pageSize = 10)
+    {
+        try
+        {
+            var query = _context.Notifications
+                .Include(n => n.Event)
+                .Include(n => n.User)
+                .Include(n => n.SentByNavigation)
+                .AsQueryable();
+
+            // Tìm kiếm
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.ToLower();
+                query = query.Where(n => 
+                    n.Title.ToLower().Contains(searchTerm) ||
+                    n.Subject.ToLower().Contains(searchTerm) ||
+                    n.Body.ToLower().Contains(searchTerm));
+            }
+
+            // Lọc theo sự kiện
+            if (eventId.HasValue)
+            {
+                query = query.Where(n => n.EventId == eventId);
+            }
+
+            // Lọc theo loại thông báo
+            if (!string.IsNullOrWhiteSpace(notificationType))
+            {
+                query = query.Where(n => n.NotificationType == notificationType);
+            }
+
+            // Lọc theo mức độ ưu tiên
+            if (!string.IsNullOrWhiteSpace(priority))
+            {
+                query = query.Where(n => n.Priority == priority);
+            }
+
+            // Lọc theo trạng thái
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(n => n.Status == status);
+            }
+
+            // Đếm tổng số item
+            var totalItems = await query.CountAsync();
+
+            // Sắp xếp
+            query = sortBy.ToLower() switch
+            {
+                "title" => sortOrder == "asc"
+                    ? query.OrderBy(n => n.Title)
+                    : query.OrderByDescending(n => n.Title),
+                "user" => sortOrder == "asc"
+                    ? query.OrderBy(n => n.User.FullName)
+                    : query.OrderByDescending(n => n.User.FullName),
+                _ => sortOrder == "asc"
+                    ? query.OrderBy(n => n.SentAt)
+                    : query.OrderByDescending(n => n.SentAt)
+            };
+
+            // Phân trang
+            var notifications = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (notifications, totalItems);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting notifications list");
+            throw;
+        }
+    }
+
+    public async Task<Notification?> GetNotificationByIdAsync(int notificationId)
+    {
+        try
+        {
+            return await _context.Notifications
+                .Include(n => n.Event)
+                .Include(n => n.User)
+                .Include(n => n.SentByNavigation)
+                .FirstOrDefaultAsync(n => n.NotificationId == notificationId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting notification {NotificationId}", notificationId);
+            throw;
+        }
+    }
+
+    public async Task<Notification> CreateNotificationAsync(
+        string notificationType,
+        string priority,
+        int? eventId,
+        int userId,
+        string title,
+        string subject,
+        string body,
+        string? link,
+        int sentBy)
+    {
+        try
+        {
+            var notification = new Notification
+            {
+                NotificationType = notificationType,
+                Priority = priority,
+                EventId = eventId,
+                UserId = userId,
+                Title = title,
+                Subject = subject,
+                Body = body,
+                Link = link,
+                SentBy = sentBy,
+                Status = "Sent",
+                SentAt = DateTime.Now,
+                IsRead = false
+            };
+
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            return notification;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating notification");
+            throw;
+        }
+    }
+
+    public async Task ResendNotificationAsync(int notificationId)
+    {
+        try
+        {
+            var notification = await _context.Notifications.FindAsync(notificationId);
+            if (notification == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy thông báo.");
+            }
+
+            notification.Status = "Sent";
+            notification.RetryCount++;
+            notification.ErrorMessage = null;
+            notification.SentAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resending notification {NotificationId}", notificationId);
+            throw;
+        }
+    }
+
+    public async Task DeleteNotificationAsync(int notificationId)
+    {
+        try
+        {
+            var notification = await _context.Notifications.FindAsync(notificationId);
+            if (notification == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy thông báo.");
+            }
+
+            _context.Notifications.Remove(notification);
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting notification {NotificationId}", notificationId);
+            throw;
+        }
+    }
+
+    public async Task<(List<Qrcode>, int)> GetQRCodesAsync(
+        string? searchTerm = null,
+        int? eventId = null,
+        bool? isActive = null,
+        bool? isUsed = null,
+        string? registrationStatus = null,
+        string sortBy = "date",
+        string sortOrder = "desc",
+        int page = 1,
+        int pageSize = 10)
+    {
+        try
+        {
+            var query = _context.Qrcodes
+                .Include(q => q.Event)
+                .Include(q => q.Registration)
+                    .ThenInclude(r => r.Attendee)
+                .Include(q => q.UsedByNavigation)
+                .AsQueryable();
+
+            // Tìm kiếm
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.ToLower();
+                query = query.Where(q => q.QrcodeValue.ToLower().Contains(searchTerm));
+            }
+
+            // Lọc theo sự kiện
+            if (eventId.HasValue)
+            {
+                query = query.Where(q => q.EventId == eventId);
+            }
+
+            // Lọc theo trạng thái hoạt động
+            if (isActive.HasValue)
+            {
+                query = query.Where(q => q.IsActive == isActive);
+            }
+
+            // Lọc theo trạng thái sử dụng
+            if (isUsed.HasValue)
+            {
+                query = query.Where(q => isUsed.Value ? q.UsedAt != null : q.UsedAt == null);
+            }
+
+            // Lọc theo trạng thái đăng ký
+            if (!string.IsNullOrWhiteSpace(registrationStatus))
+            {
+                query = query.Where(q => q.Registration.Status == registrationStatus);
+            }
+
+            // Đếm tổng số item
+            var totalItems = await query.CountAsync();
+
+            // Sắp xếp
+            query = sortBy.ToLower() switch
+            {
+                "event" => sortOrder == "asc"
+                    ? query.OrderBy(q => q.Event.EventName)
+                    : query.OrderByDescending(q => q.Event.EventName),
+                "attendee" => sortOrder == "asc"
+                    ? query.OrderBy(q => q.Registration.Attendee.FullName)
+                    : query.OrderByDescending(q => q.Registration.Attendee.FullName),
+                _ => sortOrder == "asc"
+                    ? query.OrderBy(q => q.GeneratedAt)
+                    : query.OrderByDescending(q => q.GeneratedAt)
+            };
+
+            // Phân trang
+            var qrcodes = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (qrcodes, totalItems);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting QR codes list");
+            throw;
+        }
+    }
+
+    public async Task<Qrcode?> GetQRCodeByIdAsync(int qrcodeId)
+    {
+        try
+        {
+            return await _context.Qrcodes
+                .Include(q => q.Event)
+                .Include(q => q.Registration)
+                    .ThenInclude(r => r.Attendee)
+                .Include(q => q.UsedByNavigation)
+                .FirstOrDefaultAsync(q => q.QrcodeId == qrcodeId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting QR code {QRCodeId}", qrcodeId);
+            throw;
+        }
+    }
+
+    public async Task<List<Registration>> GetRegistrationsForQRCodeAsync(int eventId)
+    {
+        try
+        {
+            return await _context.Registrations
+                .Include(r => r.Attendee)
+                .Where(r => r.EventId == eventId && r.Status == "Confirmed" && !r.IsDeleted)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting registrations for QR code");
+            throw;
+        }
+    }
+
+    public async Task<Qrcode> GenerateQRCodeAsync(int eventId, int registrationId, DateTime? expiresAt)
+    {
+        try
+        {
+            var registration = await _context.Registrations
+                .Include(r => r.Event)
+                .FirstOrDefaultAsync(r => r.RegistrationId == registrationId);
+
+            if (registration == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy đăng ký.");
+            }
+
+            if (registration.EventId != eventId)
+            {
+                throw new InvalidOperationException("Đăng ký không thuộc sự kiện này.");
+            }
+
+            if (registration.Status != "Confirmed")
+            {
+                throw new InvalidOperationException("Chỉ có thể tạo QR Code cho đăng ký đã được duyệt.");
+            }
+
+            if (registration.IsDeleted)
+            {
+                throw new InvalidOperationException("Đăng ký đã bị xóa.");
+            }
+
+            var existingQRCode = await _context.Qrcodes
+                .FirstOrDefaultAsync(q => q.RegistrationId == registrationId && q.IsActive);
+
+            if (existingQRCode != null)
+            {
+                throw new InvalidOperationException("Đã tồn tại QR Code đang hoạt động cho đăng ký này.");
+            }
+
+            var qrcode = new Qrcode
+            {
+                EventId = eventId,
+                RegistrationId = registrationId,
+                QrcodeValue = Guid.NewGuid().ToString(),
+                QrcodeImageUrl = $"/qrcodes/{Guid.NewGuid()}.png", // Tạm thời, cần cập nhật sau khi tạo ảnh
+                GeneratedAt = DateTime.Now,
+                ExpiresAt = expiresAt,
+                IsActive = true,
+                ScanCount = 0
+            };
+
+            _context.Qrcodes.Add(qrcode);
+            await _context.SaveChangesAsync();
+
+            return qrcode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating QR code");
+            throw;
+        }
+    }
+
+    public async Task ScanQRCodeAsync(string qrcodeValue, int userId, string checkInMethod, string checkInLocation)
+    {
+        try
+        {
+            var qrcode = await _context.Qrcodes
+                .Include(q => q.Registration)
+                .Include(q => q.Event)
+                .FirstOrDefaultAsync(q => q.QrcodeValue == qrcodeValue);
+
+            if (qrcode == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy QR Code.");
+            }
+
+            if (!qrcode.IsActive)
+            {
+                throw new InvalidOperationException("QR Code đã hết hiệu lực.");
+            }
+
+            if (qrcode.UsedAt.HasValue)
+            {
+                throw new InvalidOperationException("QR Code đã được sử dụng.");
+            }
+
+            if (qrcode.ExpiresAt.HasValue && qrcode.ExpiresAt.Value < DateTime.Now)
+            {
+                throw new InvalidOperationException("QR Code đã hết hạn.");
+            }
+
+            var now = DateTime.Now;
+            if (now < qrcode.Event.StartDate.AddHours(-1))
+            {
+                throw new InvalidOperationException("Chỉ có thể check-in trong vòng 1 giờ trước khi sự kiện bắt đầu.");
+            }
+
+            if (now > qrcode.Event.EndDate)
+            {
+                throw new InvalidOperationException("Không thể check-in sau khi sự kiện kết thúc.");
+            }
+
+            qrcode.UsedAt = now;
+            qrcode.UsedBy = userId;
+            qrcode.ScanCount++;
+
+            qrcode.Registration.Status = "CheckedIn";
+            qrcode.Registration.CheckInTime = now;
+            qrcode.Registration.CheckInBy = userId;
+            qrcode.Registration.CheckInMethod = checkInMethod;
+            qrcode.Registration.CheckInLocation = checkInLocation;
+            qrcode.Registration.UpdatedAt = now;
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error scanning QR code");
+            throw;
+        }
+    }
+
+    public async Task DeactivateQRCodeAsync(int qrcodeId)
+    {
+        try
+        {
+            var qrcode = await _context.Qrcodes.FindAsync(qrcodeId);
+            if (qrcode == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy QR Code.");
+            }
+
+            if (!qrcode.IsActive)
+            {
+                throw new InvalidOperationException("QR Code đã bị vô hiệu hóa trước đó.");
+            }
+
+            if (qrcode.UsedAt.HasValue)
+            {
+                throw new InvalidOperationException("Không thể vô hiệu hóa QR Code đã sử dụng.");
+            }
+
+            qrcode.IsActive = false;
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deactivating QR code {QRCodeId}", qrcodeId);
+            throw;
+        }
+    }
+
+    public async Task<(List<CalendarSync>, int)> GetCalendarSyncsAsync(
+        string? searchTerm = null,
+        int? eventId = null,
+        string? provider = null,
+        string? syncStatus = null,
+        bool? isActive = null,
+        string sortBy = "date",
+        string sortOrder = "desc",
+        int page = 1,
+        int pageSize = 10)
+    {
+        try
+        {
+            var query = _context.CalendarSyncs
+                .Include(c => c.Event)
+                .Include(c => c.User)
+                .AsQueryable();
+
+            // Tìm kiếm
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.ToLower();
+                query = query.Where(c => 
+                    c.ExternalCalendarId != null && c.ExternalCalendarId.ToLower().Contains(searchTerm) ||
+                    c.ExternalEventId != null && c.ExternalEventId.ToLower().Contains(searchTerm));
+            }
+
+            // Lọc theo sự kiện
+            if (eventId.HasValue)
+            {
+                query = query.Where(c => c.EventId == eventId);
+            }
+
+            // Lọc theo nhà cung cấp
+            if (!string.IsNullOrWhiteSpace(provider))
+            {
+                query = query.Where(c => c.Provider == provider);
+            }
+
+            // Lọc theo trạng thái đồng bộ
+            if (!string.IsNullOrWhiteSpace(syncStatus))
+            {
+                query = query.Where(c => c.SyncStatus == syncStatus);
+            }
+
+            // Lọc theo trạng thái hoạt động
+            if (isActive.HasValue)
+            {
+                query = query.Where(c => c.IsActive == isActive);
+            }
+
+            // Đếm tổng số item
+            var totalItems = await query.CountAsync();
+
+            // Sắp xếp
+            query = sortBy.ToLower() switch
+            {
+                "event" => sortOrder == "asc"
+                    ? query.OrderBy(c => c.Event.EventName)
+                    : query.OrderByDescending(c => c.Event.EventName),
+                "user" => sortOrder == "asc"
+                    ? query.OrderBy(c => c.User.FullName)
+                    : query.OrderByDescending(c => c.User.FullName),
+                _ => sortOrder == "asc"
+                    ? query.OrderBy(c => c.LastSyncedAt)
+                    : query.OrderByDescending(c => c.LastSyncedAt)
+            };
+
+            // Phân trang
+            var syncs = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (syncs, totalItems);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting calendar syncs list");
+            throw;
+        }
+    }
+
+    public async Task<CalendarSync?> GetCalendarSyncByIdAsync(int syncId)
+    {
+        try
+        {
+            return await _context.CalendarSyncs
+                .Include(c => c.Event)
+                .Include(c => c.User)
+                .FirstOrDefaultAsync(c => c.SyncId == syncId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting calendar sync {SyncId}", syncId);
+            throw;
+        }
+    }
+
+    public async Task<CalendarSync> CreateCalendarSyncAsync(
+        int eventId,
+        int userId,
+        string provider,
+        string externalCalendarId)
+    {
+        try
+        {
+            var existingSync = await _context.CalendarSyncs
+                .FirstOrDefaultAsync(c => 
+                    c.EventId == eventId && 
+                    c.UserId == userId && 
+                    c.Provider == provider &&
+                    c.IsActive);
+
+            if (existingSync != null)
+            {
+                throw new InvalidOperationException("Đã tồn tại đồng bộ đang hoạt động cho sự kiện và người dùng này.");
+            }
+
+            var sync = new CalendarSync
+            {
+                EventId = eventId,
+                UserId = userId,
+                Provider = provider,
+                ExternalCalendarId = externalCalendarId,
+                LastSyncedAt = DateTime.Now,
+                NextSyncAt = DateTime.Now.AddHours(1),
+                SyncStatus = "Pending",
+                RetryCount = 0,
+                IsActive = true
+            };
+
+            _context.CalendarSyncs.Add(sync);
+            await _context.SaveChangesAsync();
+
+            return sync;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating calendar sync");
+            throw;
+        }
+    }
+
+    public async Task SyncCalendarAsync(int syncId)
+    {
+        try
+        {
+            var sync = await _context.CalendarSyncs
+                .Include(c => c.Event)
+                .FirstOrDefaultAsync(c => c.SyncId == syncId);
+
+            if (sync == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy đồng bộ.");
+            }
+
+            if (!sync.IsActive)
+            {
+                throw new InvalidOperationException("Đồng bộ đã bị dừng.");
+            }
+
+            // TODO: Thực hiện đồng bộ với calendar provider
+            sync.LastSyncedAt = DateTime.Now;
+            sync.NextSyncAt = DateTime.Now.AddHours(1);
+            sync.SyncStatus = "Synced";
+            sync.ErrorMessage = null;
+            sync.RetryCount = 0;
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error syncing calendar {SyncId}", syncId);
+            throw;
+        }
+    }
+
+    public async Task ToggleCalendarSyncAsync(int syncId, bool isActive)
+    {
+        try
+        {
+            var sync = await _context.CalendarSyncs.FindAsync(syncId);
+            if (sync == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy đồng bộ.");
+            }
+
+            sync.IsActive = isActive;
+            if (!isActive)
+            {
+                sync.NextSyncAt = null;
+            }
+            else
+            {
+                sync.NextSyncAt = DateTime.Now.AddHours(1);
+                sync.SyncStatus = "Pending";
+                sync.ErrorMessage = null;
+                sync.RetryCount = 0;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error toggling calendar sync {SyncId}", syncId);
+            throw;
+        }
+    }
 } 

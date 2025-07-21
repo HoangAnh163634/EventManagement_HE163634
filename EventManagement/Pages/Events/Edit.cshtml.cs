@@ -8,10 +8,12 @@ namespace EventManagement.Pages.Events;
 public class EditModel : PageModel
 {
     private readonly EventService _eventService;
+    private readonly ILogger<EditModel> _logger;
 
-    public EditModel(EventService eventService)
+    public EditModel(EventService eventService, ILogger<EditModel> logger)
     {
         _eventService = eventService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -113,7 +115,8 @@ public class EditModel : PageModel
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError(string.Empty, "Có lỗi xảy ra khi cập nhật sự kiện. Vui lòng thử lại.");
+            _logger.LogError(ex, "Error updating event");
+            TempData["ErrorMessage"] = $"Có lỗi xảy ra khi cập nhật sự kiện: {ex.Message}";
             Event.EventTypes = await _eventService.GetEventTypesAsync();
             return Page();
         }

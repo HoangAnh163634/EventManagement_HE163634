@@ -1,0 +1,446 @@
+@page
+@model EventManagement.Pages.Admin.QRCodesModel
+@{
+    ViewData["Title"] = "Quản lý QR Code";
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-gold mb-0">
+            <i class="fas fa-qrcode me-2"></i>Quản lý QR Code
+        </h2>
+        <button type="button" class="btn btn-gold" data-bs-toggle="modal" data-bs-target="#createModal">
+            <i class="fas fa-plus me-2"></i>Tạo QR Code
+        </button>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card bg-dark border-gold mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary">
+                            <i class="fas fa-search text-gold"></i>
+                        </span>
+                        <input type="text" name="searchTerm" class="form-control bg-dark text-white border-secondary" 
+                               placeholder="Tìm kiếm mã..." value="@Model.SearchTerm">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select name="eventId" class="form-select bg-dark text-white border-secondary">
+                        <option value="">Tất cả sự kiện</option>
+                        @foreach (var evt in Model.Events)
+                        {
+                            <option value="@evt.EventId" selected="@(Model.EventId == evt.EventId)">
+                                @evt.EventName
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="isActive" class="form-select bg-dark text-white border-secondary">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="true" selected="@(Model.IsActive == true)">Còn hiệu lực</option>
+                        <option value="false" selected="@(Model.IsActive == false)">Hết hiệu lực</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="isUsed" class="form-select bg-dark text-white border-secondary">
+                        <option value="">Tất cả sử dụng</option>
+                        <option value="true" selected="@(Model.IsUsed == true)">Đã sử dụng</option>
+                        <option value="false" selected="@(Model.IsUsed == false)">Chưa sử dụng</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="registrationStatus" class="form-select bg-dark text-white border-secondary">
+                        <option value="">Tất cả đăng ký</option>
+                        <option value="Pending" selected="@(Model.RegistrationStatus == "Pending")">Chờ duyệt</option>
+                        <option value="Confirmed" selected="@(Model.RegistrationStatus == "Confirmed")">Đã duyệt</option>
+                        <option value="Cancelled" selected="@(Model.RegistrationStatus == "Cancelled")">Đã hủy</option>
+                        <option value="CheckedIn" selected="@(Model.RegistrationStatus == "CheckedIn")">Đã check-in</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-gold w-100">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- QR Codes Table -->
+    <div class="card bg-dark border-gold">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>QR Code</th>
+                            <th>
+                                <a href="@Model.GetSortUrl("event")" class="text-white text-decoration-none">
+                                    Sự kiện
+                                    @if (Model.SortBy == "event")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@Model.GetSortUrl("attendee")" class="text-white text-decoration-none">
+                                    Người đăng ký
+                                    @if (Model.SortBy == "attendee")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>
+                                <a href="@Model.GetSortUrl("date")" class="text-white text-decoration-none">
+                                    Thời gian
+                                    @if (Model.SortBy == "date")
+                                    {
+                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                    }
+                                </a>
+                            </th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var qrcode in Model.QRCodes)
+                        {
+                            <tr>
+                                <td>
+                                    <img src="@qrcode.QrcodeImageUrl" class="img-fluid" style="max-width: 100px;" alt="QR Code">
+                                    <div class="text-muted small">@qrcode.QrcodeValue</div>
+                                </td>
+                                <td>
+                                    <a href="/Admin/Events/@qrcode.EventId" class="text-gold">
+                                        @qrcode.Event.EventName
+                                    </a>
+                                    <div class="text-muted small">
+                                        @qrcode.Event.StartDate.ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="/Admin/UserDetails/@qrcode.Registration.AttendeeId" class="text-gold">
+                                        @qrcode.Registration.Attendee.FullName
+                                    </a>
+                                    <div class="text-muted small">@qrcode.Registration.Attendee.Email</div>
+                                </td>
+                                <td>
+                                    <div>Tạo: @qrcode.GeneratedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                    @if (qrcode.ExpiresAt.HasValue)
+                                    {
+                                        <div class="text-muted small">
+                                            Hết hạn: @qrcode.ExpiresAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                    }
+                                    @if (qrcode.UsedAt.HasValue)
+                                    {
+                                        <div class="text-muted small">
+                                            Sử dụng: @qrcode.UsedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="mb-1">
+                                        @if (qrcode.IsActive)
+                                        {
+                                            <span class="badge bg-success">Còn hiệu lực</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Hết hiệu lực</span>
+                                        }
+                                    </div>
+                                    <div>
+                                        @switch (qrcode.Registration.Status)
+                                        {
+                                            case "Pending":
+                                                <span class="badge bg-warning">Chờ duyệt</span>
+                                                break;
+                                            case "Confirmed":
+                                                <span class="badge bg-success">Đã duyệt</span>
+                                                break;
+                                            case "Cancelled":
+                                                <span class="badge bg-danger">Đã hủy</span>
+                                                break;
+                                            case "CheckedIn":
+                                                <span class="badge bg-info">Đã check-in</span>
+                                                break;
+                                        }
+                                    </div>
+                                    @if (qrcode.ScanCount > 0)
+                                    {
+                                        <div class="text-muted small">
+                                            <i class="fas fa-sync me-1"></i>@qrcode.ScanCount lần quét
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="/Admin/QRCodes/@qrcode.QrcodeId" class="btn btn-sm btn-outline-gold me-2">
+                                        <i class="fas fa-eye me-1"></i>Chi tiết
+                                    </a>
+                                    @if (qrcode.IsActive && !qrcode.UsedAt.HasValue)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-info me-2"
+                                                onclick="scanQRCode('@qrcode.QrcodeValue')">
+                                            <i class="fas fa-camera me-1"></i>Quét
+                                        </button>
+                                    }
+                                    @if (!qrcode.UsedAt.HasValue)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                onclick="deactivateQRCode(@qrcode.QrcodeId)">
+                                            <i class="fas fa-ban me-1"></i>Vô hiệu
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <div class="text-muted">
+                        Hiển thị @(((Model.CurrentPage - 1) * Model.PageSize) + 1) - @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems)) 
+                        trên tổng số @Model.TotalItems QR Code
+                    </div>
+                    <nav>
+                        <ul class="pagination mb-0">
+                            @if (Model.CurrentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link bg-dark text-gold border-gold" 
+                                       href="@Model.GetPageUrl(Model.CurrentPage - 1)">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            }
+
+                            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link bg-dark text-gold border-gold" 
+                                       href="@Model.GetPageUrl(i)">@i</a>
+                                </li>
+                            }
+
+                            @if (Model.CurrentPage < Model.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link bg-dark text-gold border-gold" 
+                                       href="@Model.GetPageUrl(Model.CurrentPage + 1)">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Tạo QR Code mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createForm">
+                    <div class="mb-3">
+                        <label class="form-label">Sự kiện</label>
+                        <select id="eventId" class="form-select bg-dark text-white border-secondary">
+                            @foreach (var evt in Model.Events)
+                            {
+                                <option value="@evt.EventId">@evt.EventName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Người đăng ký</label>
+                        <select id="registrationId" class="form-select bg-dark text-white border-secondary">
+                            <option value="">Chọn sự kiện trước</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Thời gian hết hạn</label>
+                        <input type="datetime-local" id="expiresAt" class="form-control bg-dark text-white border-secondary">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-gold" onclick="generateQRCode()">
+                    <i class="fas fa-qrcode me-2"></i>Tạo QR Code
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scan Modal -->
+<div class="modal fade" id="scanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Quét QR Code</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="qrcodeValue">
+                <div class="mb-3">
+                    <label class="form-label">Phương thức check-in</label>
+                    <select id="checkInMethod" class="form-select bg-dark text-white border-secondary">
+                        <option value="QRCode">QR Code</option>
+                        <option value="Manual">Thủ công</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Địa điểm check-in</label>
+                    <input type="text" id="checkInLocation" class="form-control bg-dark text-white border-secondary">
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-info" onclick="submitScan()">
+                    <i class="fas fa-sign-in-alt me-2"></i>Check-in
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let createModal;
+        let scanModal;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            createModal = new bootstrap.Modal(document.getElementById('createModal'));
+            scanModal = new bootstrap.Modal(document.getElementById('scanModal'));
+
+            // Cập nhật danh sách đăng ký khi chọn sự kiện
+            document.getElementById('eventId').addEventListener('change', function() {
+                const eventId = this.value;
+                if (eventId) {
+                    fetch(`/Admin/QRCodes?handler=Registrations&eventId=${eventId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const select = document.getElementById('registrationId');
+                            select.innerHTML = '';
+                            data.forEach(reg => {
+                                const option = document.createElement('option');
+                                option.value = reg.registrationId;
+                                option.text = `${reg.attendeeName} (${reg.attendeeEmail})`;
+                                select.appendChild(option);
+                            });
+                        });
+                }
+            });
+        });
+
+        function generateQRCode() {
+            const data = {
+                eventId: document.getElementById('eventId').value,
+                registrationId: document.getElementById('registrationId').value,
+                expiresAt: document.getElementById('expiresAt').value || null
+            };
+
+            if (!data.registrationId) {
+                alert('Vui lòng chọn người đăng ký.');
+                return;
+            }
+
+            fetch(`/Admin/QRCodes?handler=Generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    createModal.hide();
+                    location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                }
+            });
+        }
+
+        function scanQRCode(qrcodeValue) {
+            document.getElementById('qrcodeValue').value = qrcodeValue;
+            document.getElementById('checkInMethod').value = 'QRCode';
+            document.getElementById('checkInLocation').value = '';
+            scanModal.show();
+        }
+
+        function submitScan() {
+            const data = {
+                qrcodeValue: document.getElementById('qrcodeValue').value,
+                checkInMethod: document.getElementById('checkInMethod').value,
+                checkInLocation: document.getElementById('checkInLocation').value
+            };
+
+            if (!data.checkInLocation) {
+                alert('Vui lòng nhập địa điểm check-in.');
+                return;
+            }
+
+            fetch(`/Admin/QRCodes?handler=Scan`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    scanModal.hide();
+                    location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                }
+            });
+        }
+
+        function deactivateQRCode(qrcodeId) {
+            if (confirm('Bạn có chắc chắn muốn vô hiệu hóa QR Code này?')) {
+                fetch(`/Admin/QRCodes?handler=Deactivate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ qrcodeId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                    }
+                });
+            }
+        }
+    </script>
+} 

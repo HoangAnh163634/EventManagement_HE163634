@@ -9,24 +9,24 @@ using System.Linq;
 
 namespace EventManagement.Pages.Admin;
 
-public class EventsModel : PageModel
+public class RegistrationsModel : PageModel
 {
     private readonly AdminService _adminService;
     private readonly EventService _eventService;
-    private readonly ILogger<EventsModel> _logger;
+    private readonly ILogger<RegistrationsModel> _logger;
 
-    public EventsModel(
+    public RegistrationsModel(
         AdminService adminService,
         EventService eventService,
-        ILogger<EventsModel> logger)
+        ILogger<RegistrationsModel> logger)
     {
         _adminService = adminService;
         _eventService = eventService;
         _logger = logger;
     }
 
+    public List<Registration> Registrations { get; set; } = new();
     public List<Event> Events { get; set; } = new();
-    public List<EventType> EventTypes { get; set; } = new();
     public int TotalItems { get; set; }
     public int CurrentPage { get; set; } = 1;
     public int PageSize { get; set; } = 10;
@@ -36,7 +36,7 @@ public class EventsModel : PageModel
     public string? SearchTerm { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public int? EventTypeId { get; set; }
+    public int? EventId { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public string? Status { get; set; }
@@ -68,29 +68,29 @@ public class EventsModel : PageModel
                 return RedirectToPage("/Index");
             }
 
-            // Lấy danh sách loại sự kiện cho filter
-            EventTypes = await _eventService.GetEventTypesAsync(includeInactive: false);
+            // Lấy danh sách sự kiện cho filter
+            Events = await _eventService.GetEventsAsync();
 
-            // Lấy danh sách sự kiện theo filter
+            // Lấy danh sách đăng ký theo filter
             CurrentPage = Page;
-            var (events, totalItems) = await _adminService.GetEventsAsync(
-                SearchTerm, EventTypeId, Status, StartDate, EndDate,
+            var (registrations, totalItems) = await _adminService.GetRegistrationsAsync(
+                SearchTerm, EventId, Status, StartDate, EndDate,
                 SortBy, SortOrder, CurrentPage, PageSize);
 
-            Events = events;
+            Registrations = registrations;
             TotalItems = totalItems;
 
             return Page();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading events list");
-            TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải danh sách sự kiện.";
+            _logger.LogError(ex, "Error loading registrations list");
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải danh sách đăng ký.";
             return RedirectToPage("/Index");
         }
     }
 
-    public async Task<IActionResult> OnPostCancelEventAsync([FromQuery] int eventId)
+    public async Task<IActionResult> OnPostUpdateStatusAsync([FromBody] UpdateRegistrationStatusModel model)
     {
         try
         {
@@ -100,15 +100,57 @@ public class EventsModel : PageModel
                 return new JsonResult(new { success = false, message = "Không có quyền truy cập." });
             }
 
-            await _adminService.UpdateEventStatusAsync(eventId, isCancelled: true);
+            await _adminService.UpdateRegistrationStatusAsync(model.RegistrationId, model.Status);
             
-            _logger.LogInformation("Event {EventId} cancelled by admin", eventId);
+            _logger.LogInformation(
+                "Registration {RegistrationId} status updated to {Status} by admin",
+                model.RegistrationId,
+                model.Status);
+
             return new JsonResult(new { success = true });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error cancelling event {EventId}", eventId);
-            return new JsonResult(new { success = false, message = "Có lỗi xảy ra khi hủy sự kiện." });
+            _logger.LogError(ex, "Error updating registration status");
+            return new JsonResult(new { success = false, message = "Có lỗi xảy ra khi cập nhật trạng thái." });
+        }
+    }
+
+    public async Task<IActionResult> OnPostCheckInAsync([FromBody] CheckInModel model)
+    {
+        try
+        {
+            var userRole = HttpContext.Session.GetString("UserRole");
+            if (userRole != "Admin")
+            {
+                return new JsonResult(new { success = false, message = "Không có quyền truy cập." });
+            }
+
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (!userId.HasValue)
+            {
+                return new JsonResult(new { success = false, message = "Không xác định được người dùng." });
+            }
+
+            await _adminService.CheckInRegistrationAsync(
+                model.RegistrationId,
+                userId.Value,
+                model.CheckInMethod,
+                model.CheckInLocation);
+            
+            _logger.LogInformation(
+                "Registration {RegistrationId} checked in by admin {UserId}. Method: {Method}, Location: {Location}",
+                model.RegistrationId,
+                userId.Value,
+                model.CheckInMethod,
+                model.CheckInLocation);
+
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking in registration");
+            return new JsonResult(new { success = false, message = "Có lỗi xảy ra khi check-in." });
         }
     }
 
@@ -120,7 +162,7 @@ public class EventsModel : PageModel
             { "sortBy", column },
             { "sortOrder", newOrder },
             { "searchTerm", SearchTerm },
-            { "eventTypeId", EventTypeId?.ToString() },
+            { "eventId", EventId?.ToString() },
             { "status", Status },
             { "startDate", StartDate?.ToString("yyyy-MM-dd") },
             { "endDate", EndDate?.ToString("yyyy-MM-dd") },
@@ -143,4 +185,17 @@ public class EventsModel : PageModel
         }
         return Request.Path + queryParams;
     }
+}
+
+public class UpdateRegistrationStatusModel
+{
+    public int RegistrationId { get; set; }
+    public string Status { get; set; } = null!;
+}
+
+public class CheckInModel
+{
+    public int RegistrationId { get; set; }
+    public string CheckInMethod { get; set; } = null!;
+    public string CheckInLocation { get; set; } = null!;
 } 

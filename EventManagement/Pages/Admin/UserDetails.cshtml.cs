@@ -10,82 +10,50 @@ namespace EventManagement.Pages.Admin;
 public class UserDetailsModel : PageModel
 {
     private readonly AdminService _adminService;
-    private readonly EmailService _emailService;
     private readonly ILogger<UserDetailsModel> _logger;
 
-    public UserDetailsModel(
-        AdminService adminService,
-        EmailService emailService,
-        ILogger<UserDetailsModel> logger)
+    public UserDetailsModel(AdminService adminService, ILogger<UserDetailsModel> logger)
     {
         _adminService = adminService;
-        _emailService = emailService;
         _logger = logger;
     }
 
-    [BindProperty]
-    public User User { get; set; } = new();
-    public List<Role> AllRoles { get; set; } = new();
+    public User? User { get; set; }
+    public List<Role> Roles { get; set; } = new();
+    public List<int> SelectedRoles { get; set; } = new();
 
-    public async Task<IActionResult> OnGetAsync(int id)
+    public async Task<IActionResult> OnGetAsync(int? id)
     {
-        try
+        if (id == null)
         {
-            // Kiểm tra phân quyền
-            var userRole = HttpContext.Session.GetString("UserRole");
-            if (userRole != "Admin")
-            {
-                TempData["ErrorMessage"] = "Bạn không có quyền truy cập trang này.";
-                return RedirectToPage("/Index");
-            }
-
-            // Lấy thông tin user và danh sách role
-            User = await _adminService.GetUserByIdAsync(id);
-            if (User == null)
-            {
-                return Page();
-            }
-
-            AllRoles = await _adminService.GetAllRolesAsync();
-            return Page();
+            return NotFound();
         }
-        catch (Exception ex)
+
+        User = await _adminService.GetUserByIdAsync(id.Value);
+        if (User == null)
         {
-            _logger.LogError(ex, "Error loading user details for user {UserId}", id);
-            TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải thông tin người dùng.";
-            return RedirectToPage("/Admin/Users");
+            return NotFound();
         }
+
+        Roles = await _adminService.GetAllRolesAsync();
+        SelectedRoles = User.UserRoleUsers?.Select(ur => ur.RoleId).ToList() ?? new List<int>();
+
+        return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync(int[] selectedRoles)
+    public async Task<IActionResult> OnPostAsync(int id, bool isActive, List<int> selectedRoles)
     {
         try
         {
-            // Kiểm tra phân quyền
-            var userRole = HttpContext.Session.GetString("UserRole");
-            if (userRole != "Admin")
-            {
-                return new JsonResult(new { success = false, message = "Không có quyền truy cập." });
-            }
-
-            // Cập nhật thông tin user
-            await _adminService.UpdateUserAsync(User.UserId, User.IsActive, selectedRoles);
-            
-            // Ghi log
-            _logger.LogInformation(
-                "User {UserId} updated by admin. Status: {IsActive}, Roles: {Roles}",
-                User.UserId,
-                User.IsActive,
-                string.Join(", ", selectedRoles));
-
-            TempData["SuccessMessage"] = "Cập nhật người dùng thành công.";
-            return RedirectToPage("/Admin/UserDetails", new { id = User.UserId });
+            await _adminService.UpdateUserAsync(id, isActive, selectedRoles.ToArray());
+            TempData["SuccessMessage"] = "Cập nhật thông tin người dùng thành công.";
+            return RedirectToPage("/Admin/Users");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating user {UserId}", User.UserId);
-            TempData["ErrorMessage"] = "Có lỗi xảy ra khi cập nhật người dùng.";
-            return RedirectToPage("/Admin/UserDetails", new { id = User.UserId });
+            _logger.LogError(ex, "Error updating user {UserId}", id);
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi cập nhật thông tin người dùng.";
+            return RedirectToPage("/Admin/UserDetails", new { id });
         }
     }
 

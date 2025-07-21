@@ -1,7 +1,8 @@
 @page
 @model EventManagement.Pages.Notifications.IndexModel
 @{
-    ViewData["Title"] = "Thông báo";
+    ViewData["Title"] = "Notifications";
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 }
 
 <div class="container py-5">
@@ -138,7 +139,7 @@
             .build();
 
         // Join user group
-        const userId = '@Context.Session.GetInt32("UserId")';
+        const userId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
         if (userId) {
             connection.start()
                 .then(() => connection.invoke("JoinUserGroup", userId))
