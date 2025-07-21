@@ -167,30 +167,6 @@
                         </div>
                     </div>
                 </div>
-
-                @if (Model.Event?.Registrations != null)
-                {
-                    <div class="mb-4">
-                        <h5 class="text-gold">Người tham gia (@Model.Event.Registrations.Count(r => r.Status == "Confirmed" || r.Status == "CheckedIn"))</h5>
-                        <div class="row g-3">
-                            @foreach (var registration in Model.Event.Registrations.Where(r => r.Status == "Confirmed" || r.Status == "CheckedIn"))
-                            {
-                                if (registration.Attendee != null)
-                                {
-                                    <div class="col-md-4">
-                                        <div class="d-flex align-items-center">
-                                            <img src="@(registration.Attendee.ProfileImageUrl ?? "/images/default-avatar.png")" 
-                                                 alt="@registration.Attendee.FullName" 
-                                                 class="rounded-circle me-2" 
-                                                 style="width: 32px; height: 32px; object-fit: cover;">
-                                            <span class="text-white">@registration.Attendee.FullName</span>
-                                        </div>
-                                    </div>
-                                }
-                            }
-                        </div>
-                    </div>
-                }
             </div>
 
             <div class="col-lg-4">

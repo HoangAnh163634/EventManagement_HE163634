@@ -1,0 +1,180 @@
+@page
+@model EventManagement.Pages.Account.ProfileModel
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <h2 class="text-gold mb-4">
+                <i class="fas fa-user me-2"></i>Thông tin cá nhân
+            </h2>
+
+            @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @Model.SuccessMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @Model.ErrorMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="card bg-dark border-gold">
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label asp-for="User.FullName" class="form-label text-white">Họ và tên</label>
+                            <input asp-for="User.FullName" class="form-control bg-dark text-white border-secondary" />
+                            <span asp-validation-for="User.FullName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="User.Email" class="form-label text-white">Email</label>
+                            <input asp-for="User.Email" class="form-control bg-dark text-white border-secondary" readonly />
+                            @if (!Model.User.IsEmailVerified)
+                            {
+                                <div class="mt-2">
+                                    <span class="text-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>Email chưa được xác thực
+                                    </span>
+                                    <button type="submit" asp-page-handler="ResendVerification" class="btn btn-link text-warning p-0 ms-2">
+                                        Gửi lại email xác thực
+                                    </button>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="User.PhoneNumber" class="form-label text-white">Số điện thoại</label>
+                            <input asp-for="User.PhoneNumber" class="form-control bg-dark text-white border-secondary" />
+                            <span asp-validation-for="User.PhoneNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="User.DateOfBirth" class="form-label text-white">Ngày sinh</label>
+                            <input asp-for="User.DateOfBirth" type="date" class="form-control bg-dark text-white border-secondary" />
+                            <span asp-validation-for="User.DateOfBirth" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="User.Gender" class="form-label text-white">Giới tính</label>
+                            <select asp-for="User.Gender" class="form-select bg-dark text-white border-secondary">
+                                <option value="">-- Chọn giới tính --</option>
+                                <option value="Male">Nam</option>
+                                <option value="Female">Nữ</option>
+                                <option value="Other">Khác</option>
+                            </select>
+                            <span asp-validation-for="User.Gender" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="User.Address" class="form-label text-white">Địa chỉ</label>
+                            <textarea asp-for="User.Address" class="form-control bg-dark text-white border-secondary" rows="3"></textarea>
+                            <span asp-validation-for="User.Address" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-gold">
+                                <i class="fas fa-save me-2"></i>Lưu thay đổi
+                            </button>
+                            <button type="button" class="btn btn-outline-gold" onclick="showChangePasswordModal()">
+                                <i class="fas fa-key me-2"></i>Đổi mật khẩu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Stats Card -->
+            <div class="card bg-dark border-gold mb-4">
+                <div class="card-body">
+                    <h5 class="text-gold mb-4">Thống kê hoạt động</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Sự kiện đã tham gia:</span>
+                        <span class="text-white">@Model.AttendedEventsCount</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Sự kiện đã tổ chức:</span>
+                        <span class="text-white">@Model.OrganizedEventsCount</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Đánh giá đã gửi:</span>
+                        <span class="text-white">@Model.FeedbackCount</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Info Card -->
+            <div class="card bg-dark border-gold">
+                <div class="card-body">
+                    <h5 class="text-gold mb-4">Thông tin tài khoản</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Ngày tham gia:</span>
+                        <span class="text-white">@Model.User.CreatedAt.ToString("dd/MM/yyyy")</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Lần đăng nhập cuối:</span>
+                        <span class="text-white">@(Model.User.LastLoginAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Vai trò:</span>
+                        <span class="text-white">@string.Join(", ", Model.UserRoles)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-gold">
+            <div class="modal-header border-gold">
+                <h5 class="modal-title text-gold">Đổi mật khẩu</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="ChangePassword">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label text-white">Mật khẩu hiện tại</label>
+                        <input type="password" id="currentPassword" name="currentPassword" class="form-control bg-dark text-white border-secondary" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label text-white">Mật khẩu mới</label>
+                        <input type="password" id="newPassword" name="newPassword" class="form-control bg-dark text-white border-secondary" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label text-white">Xác nhận mật khẩu mới</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-control bg-dark text-white border-secondary" required />
+                    </div>
+                </div>
+                <div class="modal-footer border-gold">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-gold">
+                        <i class="fas fa-save me-2"></i>Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showChangePasswordModal() {
+            var modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+            modal.show();
+        }
+    </script>
+} 

@@ -67,31 +67,29 @@
                             <a class="nav-link dropdown-toggle text-gold" href="#" id="navbarDropdown" role="button" onclick="toggleDropdown(event)" aria-expanded="false">
                                 <i class="fas fa-user-circle me-1"></i>@userName
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end" id="userDropdownMenu" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item text-white" href="/Account/Profile">
-                                    <i class="fas fa-user me-2"></i>My Profile
-                                </a></li>
-                                <li><a class="dropdown-item text-white" href="/Events/MyEvents">
-                                    <i class="fas fa-calendar me-2"></i>My Events
-                                </a></li>
-                                <li><a class="dropdown-item text-white" href="/Registrations/MyRegistrations">
-                                    <i class="fas fa-ticket-alt me-2"></i>My Registrations
-                                </a></li>
-                                @if (userRole == "Admin")
+                            <div class="dropdown-menu dropdown-menu-end bg-dark border-gold" aria-labelledby="userDropdown">
+                                <a class="dropdown-item text-white" href="/Events/MyRegistrations">
+                                    <i class="fas fa-ticket-alt me-2"></i>Sự kiện đã đăng ký
+                                </a>
+                                <a class="dropdown-item text-white" href="/Events/MyFeedback">
+                                    <i class="fas fa-star me-2"></i>Đánh giá của tôi
+                                </a>
+                                @if (User.IsInRole("Admin") || User.IsInRole("Organizer"))
                                 {
-                                    <li><hr class="dropdown-divider" style="border-color: #2F2F2F;"></li>
-                                    <li><a class="dropdown-item text-gold" href="/Admin/Dashboard">
-                                        <i class="fas fa-cog me-2"></i>Admin Panel
-                                    </a></li>
-                                }
-                                <li><hr class="dropdown-divider" style="border-color: #2F2F2F;"></li>
-                                <li>
-                                    <a href="/Account/Logout" class="dropdown-item text-white" 
-                                       onclick="return confirm('Are you sure you want to logout?')">
-                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    <a class="dropdown-item text-white" href="/Events/MyEvents">
+                                        <i class="fas fa-calendar-alt me-2"></i>Sự kiện của tôi
                                     </a>
-                                </li>
-                            </ul>
+                                }
+                                <div class="dropdown-divider border-secondary"></div>
+                                <a class="dropdown-item text-white" href="/Account/Profile">
+                                    <i class="fas fa-user me-2"></i>Thông tin cá nhân
+                                </a>
+                                <form method="post" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index")">
+                                    <button type="submit" class="dropdown-item text-white">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                                    </button>
+                                </form>
+                            </div>
                         </li>
                     }
                     else

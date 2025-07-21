@@ -2,7 +2,6 @@
 @model EventManagement.Pages.Events.IndexModel
 @{
     ViewData["Title"] = "Events";
-    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 }
 
 <div class="container py-5">
@@ -134,16 +133,11 @@
             }
         </h4>
 
-        @if (User.Identity?.IsAuthenticated == true)
+        @if (User.Identity.IsAuthenticated)
         {
-            <div>
-                @if (Model.Events.Any(e => e.OrganizerId.ToString() == userId))
-                {
-                    <a href="/Events/Create" class="btn btn-gold">
-                        <i class="fas fa-plus me-2"></i>Tạo sự kiện mới
-                    </a>
-                }
-            </div>
+            <a href="/Events/Create" class="btn btn-outline-gold">
+                <i class="fas fa-plus me-2"></i>Tạo sự kiện mới
+            </a>
         }
     </div>
 

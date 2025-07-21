@@ -81,11 +81,26 @@ public class RegistrationService
             }
         }
 
+        // Kiểm tra đã đăng ký sự kiện này chưa
         var existingRegistration = await _context.Registrations
             .AnyAsync(r => r.EventId == eventId && r.AttendeeId == userId && !r.IsDeleted);
         if (existingRegistration)
         {
             throw new InvalidOperationException("Bạn đã đăng ký tham gia sự kiện này.");
+        }
+
+        // Kiểm tra trùng lịch với các sự kiện đã đăng ký
+        var userRegistrations = await _context.Registrations
+            .Include(r => r.Event)
+            .Where(r => r.AttendeeId == userId && !r.IsDeleted && r.Status != "Cancelled")
+            .ToListAsync();
+
+        foreach (var reg in userRegistrations)
+        {
+            if (evt.StartDate < reg.Event.EndDate && evt.EndDate > reg.Event.StartDate)
+            {
+                throw new InvalidOperationException($"Thời gian sự kiện trùng với sự kiện '{reg.Event.EventName}' mà bạn đã đăng ký.");
+            }
         }
 
         var registration = new Registration
