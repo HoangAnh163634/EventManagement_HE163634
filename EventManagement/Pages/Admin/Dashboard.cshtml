@@ -1,0 +1,324 @@
+@page
+@model EventManagement.Pages.Admin.DashboardModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+<div class="container py-5">
+    <h2 class="mb-4">Admin Dashboard</h2>
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng người dùng</h5>
+                    <h2>@Model.Dashboard.TotalUsers</h2>
+                    <small>+@Model.Dashboard.NewUsersToday hôm nay</small><br />
+                    <small>+@Model.Dashboard.NewUsersThisWeek tuần này</small><br />
+                    <small>+@Model.Dashboard.NewUsersThisMonth tháng này</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng sự kiện</h5>
+                    <h2>@Model.Dashboard.TotalEvents</h2>
+                    <small>+@Model.Dashboard.NewEventsToday hôm nay</small><br />
+                    <small>+@Model.Dashboard.NewEventsThisWeek tuần này</small><br />
+                    <small>+@Model.Dashboard.NewEventsThisMonth tháng này</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng đăng ký</h5>
+                    <h2>@Model.Dashboard.TotalRegistrations</h2>
+                    <small>+@Model.Dashboard.NewRegistrationsToday hôm nay</small><br />
+                    <small>+@Model.Dashboard.NewRegistrationsThisWeek tuần này</small><br />
+                    <small>+@Model.Dashboard.NewRegistrationsThisMonth tháng này</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng feedback</h5>
+                    <h2>@Model.Dashboard.TotalFeedbacks</h2>
+                    <small>+@Model.Dashboard.NewFeedbacksToday hôm nay</small><br />
+                    <small>+@Model.Dashboard.NewFeedbacksThisWeek tuần này</small><br />
+                    <small>+@Model.Dashboard.NewFeedbacksThisMonth tháng này</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h6>Sắp diễn ra</h6>
+                    <h3>@Model.Dashboard.UpcomingEvents</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h6>Đang diễn ra</h6>
+                    <h3>@Model.Dashboard.OngoingEvents</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h6>Đã kết thúc</h6>
+                    <h3>@Model.Dashboard.CompletedEvents</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h6>Đã hủy</h6>
+                    <h3>@Model.Dashboard.CancelledEvents</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Biểu đồ tăng trưởng người dùng (30 ngày)</h5>
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Biểu đồ tăng trưởng sự kiện (30 ngày)</h5>
+                    <canvas id="eventGrowthChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Biểu đồ tăng trưởng đăng ký (30 ngày)</h5>
+                    <canvas id="registrationGrowthChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Tỷ lệ trạng thái sự kiện</h5>
+                    <canvas id="eventStatusPie"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Tỷ lệ vai trò người dùng</h5>
+                    <canvas id="userRolePie"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Top sự kiện nhiều đăng ký</h5>
+                    <canvas id="topEventsBar"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Top organizer nhiều sự kiện</h5>
+                    <table class="table table-dark table-hover">
+                        <thead><tr><th>Họ tên</th><th>Số sự kiện</th></tr></thead>
+                        <tbody>
+                        @foreach (var org in Model.Dashboard.TopOrganizers)
+                        {
+                            <tr>
+                                <td>@org.FullName</td>
+                                <td>@org.EventCount</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // User Growth Line Chart
+        new Chart(document.getElementById('userGrowthChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: @Json.Serialize(Model.Dashboard.UserGrowth.Select(x => x.Date.ToString("dd/MM"))),
+                datasets: [{
+                    label: 'Người dùng mới',
+                    data: @Json.Serialize(Model.Dashboard.UserGrowth.Select(x => x.Value)),
+                    borderColor: '#ffd700',
+                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Tăng trưởng người dùng (30 ngày gần nhất)',
+                        color: '#ffffff'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#ffffff'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#ffffff'
+                        }
+                    }
+                }
+            }
+        });
+        // Event Growth Line Chart
+        new Chart(document.getElementById('eventGrowthChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: @Json.Serialize(Model.Dashboard.EventGrowth.Select(x => x.Date.ToString("MM/dd"))),
+                datasets: [{
+                    label: 'Event Growth',
+                    data: @Json.Serialize(Model.Dashboard.EventGrowth.Select(x => x.Value)),
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40,167,69,0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+        // Registration Growth Line Chart
+        new Chart(document.getElementById('registrationGrowthChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: @Json.Serialize(Model.Dashboard.RegistrationGrowth.Select(x => x.Date.ToString("MM/dd"))),
+                datasets: [{
+                    label: 'Registration Growth',
+                    data: @Json.Serialize(Model.Dashboard.RegistrationGrowth.Select(x => x.Value)),
+                    borderColor: '#17a2b8',
+                    backgroundColor: 'rgba(23,162,184,0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+        // Event Status Pie Chart
+        new Chart(document.getElementById('eventStatusPie').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: @Json.Serialize(Model.Dashboard.EventStatusDistribution.Keys),
+                datasets: [{
+                    data: @Json.Serialize(Model.Dashboard.EventStatusDistribution.Values),
+                    backgroundColor: [
+                        '#ffd700', // Upcoming - Gold
+                        '#28a745', // Ongoing - Green
+                        '#6c757d', // Completed - Gray
+                        '#dc3545'  // Cancelled - Red
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Phân bố trạng thái sự kiện',
+                        color: '#ffffff'
+                    }
+                }
+            }
+        });
+        // User Role Pie Chart
+        new Chart(document.getElementById('userRolePie').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: @Json.Serialize(Model.Dashboard.UserRoleDistribution.Keys),
+                datasets: [{
+                    data: @Json.Serialize(Model.Dashboard.UserRoleDistribution.Values),
+                    backgroundColor: [
+                        '#ffd700', // Admin - Gold
+                        '#17a2b8', // Organizer - Blue
+                        '#6c757d', // Staff - Gray
+                        '#28a745'  // Attendee - Green
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Phân bố vai trò người dùng',
+                        color: '#ffffff'
+                    }
+                }
+            }
+        });
+        // Top Events Bar Chart
+        new Chart(document.getElementById('topEventsBar').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: @Json.Serialize(Model.Dashboard.TopEvents.Select(x => x.EventName)),
+                datasets: [{
+                    label: 'Registrations',
+                    data: @Json.Serialize(Model.Dashboard.TopEvents.Select(x => x.RegistrationCount)),
+                    backgroundColor: '#fd7e14'
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+    </script>
+} 
