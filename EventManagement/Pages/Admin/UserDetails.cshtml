@@ -1,0 +1,261 @@
+@page "{id:int}"
+@model EventManagement.Pages.Admin.UserDetailsModel
+@{
+    ViewData["Title"] = "Chi tiết người dùng";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card bg-dark text-white">
+                <div class="card-header bg-gold text-dark d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user me-2"></i>Chi tiết người dùng
+                    </h4>
+                    <a href="/Admin/Users" class="btn btn-dark">
+                        <i class="fas fa-arrow-left me-2"></i>Quay lại
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (Model.User != null)
+                    {
+                        <div class="row mb-4">
+                            <div class="col-md-3 text-center">
+                                @if (!string.IsNullOrEmpty(Model.User.ProfileImageUrl))
+                                {
+                                    <img src="@Model.User.ProfileImageUrl" alt="@Model.User.FullName" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                                }
+                                else
+                                {
+                                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto" style="width: 150px; height: 150px;">
+                                        <i class="fas fa-user fa-4x text-white"></i>
+                                    </div>
+                                }
+                                <div class="mb-3">
+                                    <span class="badge bg-@(Model.User.IsActive ? "success" : "danger") mb-2">
+                                        @(Model.User.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                    <span class="badge bg-@(Model.User.IsEmailVerified ? "success" : "warning")">
+                                        @(Model.User.IsEmailVerified ? "Email đã xác thực" : "Chưa xác thực email")
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <dl class="row">
+                                    <dt class="col-sm-4">ID</dt>
+                                    <dd class="col-sm-8">@Model.User.UserId</dd>
+
+                                    <dt class="col-sm-4">Họ tên</dt>
+                                    <dd class="col-sm-8">@Model.User.FullName</dd>
+
+                                    <dt class="col-sm-4">Email</dt>
+                                    <dd class="col-sm-8">@Model.User.Email</dd>
+
+                                    <dt class="col-sm-4">Điện thoại</dt>
+                                    <dd class="col-sm-8">@(Model.User.PhoneNumber ?? "Chưa cập nhật")</dd>
+
+                                    <dt class="col-sm-4">Vai trò</dt>
+                                    <dd class="col-sm-8">
+                                        @foreach (var role in Model.User.UserRoleUsers.Select(ur => ur.Role.RoleName))
+                                        {
+                                            <span class="badge bg-gold text-dark me-1">@role</span>
+                                        }
+                                    </dd>
+
+                                    <dt class="col-sm-4">Ngày tạo</dt>
+                                    <dd class="col-sm-8">@Model.User.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                                    <dt class="col-sm-4">Cập nhật lần cuối</dt>
+                                    <dd class="col-sm-8">
+                                        @(Model.User.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật")
+                                    </dd>
+
+                                    <dt class="col-sm-4">Đăng nhập lần cuối</dt>
+                                    <dd class="col-sm-8">
+                                        @(Model.User.LastLoginAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa đăng nhập")
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <hr class="border-secondary" />
+
+                        <form method="post" class="mt-4">
+                            <input type="hidden" asp-for="User.UserId" />
+                            
+                            <div class="mb-4">
+                                <h5 class="mb-3">Phân quyền người dùng</h5>
+                                <div class="row g-3">
+                                    @foreach (var role in Model.AllRoles)
+                                    {
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" 
+                                                       name="selectedRoles" value="@role.RoleId"
+                                                       @(Model.User.UserRoleUsers.Any(ur => ur.RoleId == role.RoleId) ? "checked" : "") />
+                                                <label class="form-check-label">@role.RoleName</label>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h5 class="mb-3">Trạng thái tài khoản</h5>
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" asp-for="User.IsActive" />
+                                    <label class="form-check-label" asp-for="User.IsActive">Kích hoạt tài khoản</label>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <button type="submit" class="btn btn-gold">
+                                    <i class="fas fa-save me-2"></i>Cập nhật
+                                </button>
+                                <div>
+                                    <button type="button" class="btn btn-outline-danger me-2" onclick="resetPassword(@Model.User.UserId)">
+                                        <i class="fas fa-key me-2"></i>Reset mật khẩu
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning" onclick="resendVerification(@Model.User.UserId)">
+                                        <i class="fas fa-envelope me-2"></i>Gửi lại email xác thực
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <hr class="border-secondary" />
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card bg-dark border-secondary h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Sự kiện đã tổ chức (@Model.User.Events.Count)</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        @if (Model.User.Events.Any())
+                                        {
+                                            <div class="list-group list-group-flush bg-dark">
+                                                @foreach (var evt in Model.User.Events.OrderByDescending(e => e.CreatedAt).Take(5))
+                                                {
+                                                    <a href="/Admin/Events/Details/@evt.EventId" class="list-group-item list-group-item-action bg-dark text-white border-secondary">
+                                                        <div class="d-flex w-100 justify-content-between">
+                                                            <h6 class="mb-1">@evt.EventName</h6>
+                                                            <small>@evt.StartDate.ToString("dd/MM/yyyy")</small>
+                                                        </div>
+                                                        <small class="text-muted">@evt.Location</small>
+                                                    </a>
+                                                }
+                                            </div>
+                                            @if (Model.User.Events.Count > 5)
+                                            {
+                                                <div class="text-center mt-3">
+                                                    <a href="/Admin/Events?organizerId=@Model.User.UserId" class="btn btn-sm btn-outline-secondary">
+                                                        Xem tất cả
+                                                    </a>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <p class="text-muted mb-0">Chưa tổ chức sự kiện nào.</p>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-dark border-secondary h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Sự kiện đã tham gia (@Model.User.RegistrationAttendees.Count)</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        @if (Model.User.RegistrationAttendees.Any())
+                                        {
+                                            <div class="list-group list-group-flush bg-dark">
+                                                @foreach (var reg in Model.User.RegistrationAttendees.OrderByDescending(r => r.RegistrationDate).Take(5))
+                                                {
+                                                    <a href="/Admin/Events/Details/@reg.EventId" class="list-group-item list-group-item-action bg-dark text-white border-secondary">
+                                                        <div class="d-flex w-100 justify-content-between">
+                                                            <h6 class="mb-1">@reg.Event.EventName</h6>
+                                                            <small>@reg.RegistrationDate.ToString("dd/MM/yyyy")</small>
+                                                        </div>
+                                                        <small class="text-muted">@reg.Status</small>
+                                                    </a>
+                                                }
+                                            </div>
+                                            @if (Model.User.RegistrationAttendees.Count > 5)
+                                            {
+                                                <div class="text-center mt-3">
+                                                    <a href="/Admin/Events?attendeeId=@Model.User.UserId" class="btn btn-sm btn-outline-secondary">
+                                                        Xem tất cả
+                                                    </a>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <p class="text-muted mb-0">Chưa tham gia sự kiện nào.</p>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                            <h5>Không tìm thấy người dùng</h5>
+                            <a href="/Admin/Users" class="btn btn-outline-secondary mt-3">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function resetPassword(userId) {
+            if (confirm('Bạn có chắc chắn muốn reset mật khẩu cho người dùng này?')) {
+                fetch(`/Admin/UserDetails/${userId}?handler=ResetPassword`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Đã reset mật khẩu thành công. Email đã được gửi đến người dùng.');
+                    } else {
+                        alert('Có lỗi xảy ra khi reset mật khẩu. Vui lòng thử lại.');
+                    }
+                });
+            }
+        }
+
+        function resendVerification(userId) {
+            if (confirm('Bạn có chắc chắn muốn gửi lại email xác thực cho người dùng này?')) {
+                fetch(`/Admin/UserDetails/${userId}?handler=ResendVerification`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Đã gửi lại email xác thực thành công.');
+                    } else {
+                        alert('Có lỗi xảy ra khi gửi email. Vui lòng thử lại.');
+                    }
+                });
+            }
+        }
+    </script>
+} 
