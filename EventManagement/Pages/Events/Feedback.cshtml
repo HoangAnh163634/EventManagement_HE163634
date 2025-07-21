@@ -1,0 +1,268 @@
+@page "{id:int}"
+@model EventManagement.Pages.Events.FeedbackModel
+@{
+    ViewData["Title"] = "Đánh giá sự kiện";
+}
+
+<div class="container py-5">
+    @if (Model.Event != null)
+    {
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Event Info -->
+                <div class="card bg-dark border-gold mb-4">
+                    <div class="card-header bg-gold text-dark">
+                        <h4 class="mb-0">
+                            <i class="fas fa-star me-2"></i>Đánh giá sự kiện
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h5 class="text-gold">@Model.Event.EventName</h5>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-calendar me-2"></i>@Model.Event.StartDate.ToString("dd/MM/yyyy HH:mm")
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-map-marker-alt me-2"></i>@Model.Event.Location
+                            </p>
+                        </div>
+
+                        <!-- Rating Stats -->
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-dark border-secondary h-100">
+                                    <div class="card-body text-center">
+                                        <h3 class="text-gold mb-2">@Model.Event.AverageRating?.ToString("N1")</h3>
+                                        <div class="mb-2">
+                                            @for (int i = 0; i < Math.Round(Model.Event.AverageRating ?? 0); i++)
+                                            {
+                                                <i class="fas fa-star text-warning"></i>
+                                            }
+                                            @for (int i = (int)Math.Round(Model.Event.AverageRating ?? 0); i < 5; i++)
+                                            {
+                                                <i class="far fa-star text-warning"></i>
+                                            }
+                                        </div>
+                                        <p class="text-muted mb-0">@Model.Event.Feedbacks.Count() đánh giá</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card bg-dark border-secondary h-100">
+                                    <div class="card-body">
+                                        @for (int rating = 5; rating >= 1; rating--)
+                                        {
+                                            var count = Model.Event.Feedbacks.Count(f => f.Rating == rating);
+                                            var percentage = Model.Event.Feedbacks.Any() ? count * 100 / Model.Event.Feedbacks.Count() : 0;
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="me-2" style="width: 60px;">
+                                                    @for (int i = 0; i < rating; i++)
+                                                    {
+                                                        <i class="fas fa-star text-warning"></i>
+                                                    }
+                                                </div>
+                                                <div class="progress bg-secondary flex-grow-1 me-2" style="height: 8px;">
+                                                    <div class="progress-bar bg-warning" style="width: @percentage%"></div>
+                                                </div>
+                                                <div style="width: 40px;">
+                                                    <small class="text-muted">@count</small>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feedback Form -->
+                        @if (Model.CanSubmitFeedback)
+                        {
+                            <div class="mb-4">
+                                <h6 class="text-gold mb-3">Gửi đánh giá của bạn</h6>
+                                <form method="post" id="feedbackForm">
+                                    <div class="mb-3">
+                                        <label class="form-label text-white">Đánh giá</label>
+                                        <div class="rating">
+                                            @for (int i = 5; i >= 1; i--)
+                                            {
+                                                <input type="radio" name="rating" value="@i" id="star@i" required>
+                                                <label for="star@i"><i class="fas fa-star"></i></label>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-white">Nhận xét</label>
+                                        <textarea name="comments" class="form-control bg-dark text-white border-secondary" rows="3" required></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-white">Góp ý cải thiện</label>
+                                        <textarea name="suggestions" class="form-control bg-dark text-white border-secondary" rows="3"></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" name="wouldRecommend" class="form-check-input" id="wouldRecommend">
+                                            <label class="form-check-label text-white" for="wouldRecommend">
+                                                Tôi sẽ giới thiệu sự kiện này cho người khác
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" name="isPublic" class="form-check-input" id="isPublic" checked>
+                                            <label class="form-check-label text-white" for="isPublic">
+                                                Cho phép hiển thị đánh giá này công khai
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-gold">
+                                        <i class="fas fa-paper-plane me-2"></i>Gửi đánh giá
+                                    </button>
+                                </form>
+                            </div>
+                        }
+
+                        <!-- Feedback List -->
+                        <div>
+                            <h6 class="text-gold mb-3">Đánh giá từ người tham gia</h6>
+                            <div class="list-group list-group-flush">
+                                @foreach (var feedback in Model.Event.Feedbacks.Where(f => f.IsPublic).OrderByDescending(f => f.SubmittedAt))
+                                {
+                                    <div class="list-group-item bg-dark border-secondary">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="mb-0 text-white">@feedback.Attendee.FullName</h6>
+                                                <small class="text-muted">@Model.GetTimeAgo(feedback.SubmittedAt)</small>
+                                            </div>
+                                            <div>
+                                                @for (int i = 0; i < feedback.Rating; i++)
+                                                {
+                                                    <i class="fas fa-star text-warning"></i>
+                                                }
+                                                @for (int i = feedback.Rating ?? 0; i < 5; i++)
+                                                {
+                                                    <i class="far fa-star text-warning"></i>
+                                                }
+                                            </div>
+                                        </div>
+                                        <p class="text-white mb-2">@feedback.Comments</p>
+                                        @if (!string.IsNullOrEmpty(feedback.Suggestions))
+                                        {
+                                            <p class="text-muted mb-0">
+                                                <i class="fas fa-lightbulb me-2"></i>@feedback.Suggestions
+                                            </p>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Feedback Stats -->
+                <div class="card bg-dark border-gold mb-4">
+                    <div class="card-body">
+                        <h5 class="text-gold mb-4">Thống kê đánh giá</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Tổng số đánh giá:</span>
+                            <span class="text-white">@Model.Event.Feedbacks.Count()</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Đánh giá công khai:</span>
+                            <span class="text-white">@Model.Event.Feedbacks.Count(f => f.IsPublic)</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Sẽ giới thiệu:</span>
+                            <span class="text-white">@Model.Event.Feedbacks.Count(f => f.WouldRecommend == true)</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Không giới thiệu:</span>
+                            <span class="text-white">@Model.Event.Feedbacks.Count(f => f.WouldRecommend == false)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Guidelines -->
+                <div class="card bg-dark border-gold">
+                    <div class="card-body">
+                        <h5 class="text-gold mb-4">Hướng dẫn đánh giá</h5>
+                        <div class="mb-3">
+                            <h6 class="text-white mb-2">Đánh giá sao</h6>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-star text-warning me-2"></i>1 sao: Rất không hài lòng
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-star text-warning me-2"></i>2 sao: Không hài lòng
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-star text-warning me-2"></i>3 sao: Bình thường
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-star text-warning me-2"></i>4 sao: Hài lòng
+                            </p>
+                            <p class="text-muted">
+                                <i class="fas fa-star text-warning me-2"></i>5 sao: Rất hài lòng
+                            </p>
+                        </div>
+                        <div>
+                            <h6 class="text-white mb-2">Quy định đánh giá</h6>
+                            <ul class="text-muted mb-0">
+                                <li>Chỉ đánh giá sau khi đã tham gia sự kiện</li>
+                                <li>Đánh giá khách quan, không phân biệt đối xử</li>
+                                <li>Không sử dụng ngôn từ không phù hợp</li>
+                                <li>Góp ý xây dựng để cải thiện chất lượng</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-star fa-4x text-muted mb-4"></i>
+            <h3 class="text-muted">Không tìm thấy sự kiện</h3>
+            <p class="text-muted mb-4">Sự kiện này không tồn tại hoặc đã bị xóa.</p>
+            <a href="/Events" class="btn btn-outline-gold">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+            </a>
+        </div>
+    }
+</div>
+
+@section Styles {
+    <style>
+        /* Rating stars */
+        .rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-start;
+        }
+
+        .rating input {
+            display: none;
+        }
+
+        .rating label {
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            margin-bottom: 0;
+            color: #6c757d;
+            transition: color 0.2s;
+        }
+
+        .rating label:hover,
+        .rating label:hover ~ label,
+        .rating input:checked ~ label {
+            color: #ffc107;
+        }
+
+        .rating label i {
+            font-size: 24px;
+            line-height: 40px;
+        }
+    </style>
+} 

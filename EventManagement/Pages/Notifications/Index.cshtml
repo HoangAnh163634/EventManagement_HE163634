@@ -1,0 +1,206 @@
+@page
+@model EventManagement.Pages.Notifications.IndexModel
+@{
+    ViewData["Title"] = "Thông báo";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-gold mb-0">
+                    <i class="fas fa-bell me-2"></i>Thông báo
+                </h2>
+                @if (Model.Notifications.Any(n => !n.IsRead))
+                {
+                    <form method="post" asp-page-handler="MarkAllRead">
+                        <button type="submit" class="btn btn-outline-gold">
+                            <i class="fas fa-check-double me-2"></i>Đánh dấu tất cả đã đọc
+                        </button>
+                    </form>
+                }
+            </div>
+
+            @if (Model.Notifications.Any())
+            {
+                <!-- Notifications List -->
+                <div class="list-group">
+                    @foreach (var notification in Model.Notifications)
+                    {
+                        <div class="list-group-item bg-dark border-secondary @(!notification.IsRead ? "unread" : "")" 
+                             onclick="markAsRead(@notification.NotificationId, '@notification.Link')">
+                            <div class="d-flex w-100 justify-content-between align-items-start mb-2">
+                                <h5 class="mb-1 text-gold">
+                                    @if (!notification.IsRead)
+                                    {
+                                        <i class="fas fa-circle text-warning me-2" style="font-size: 8px;"></i>
+                                    }
+                                    @notification.Title
+                                </h5>
+                                <small class="text-muted">@Model.GetTimeAgo(notification.SentAt)</small>
+                            </div>
+                            <p class="mb-2 text-white">@notification.Body</p>
+                            @if (notification.Event != null)
+                            {
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar-alt me-2"></i>@notification.Event.EventName
+                                </small>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <!-- Empty State -->
+                <div class="text-center py-5">
+                    <i class="fas fa-bell-slash fa-4x text-muted mb-4"></i>
+                    <h3 class="text-muted">Không có thông báo nào</h3>
+                    <p class="text-muted">Bạn sẽ nhận được thông báo khi có hoạt động mới.</p>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Stats Card -->
+            <div class="card bg-dark border-gold mb-4">
+                <div class="card-body">
+                    <h5 class="text-gold mb-4">Thống kê</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Tổng số thông báo:</span>
+                        <span class="text-white">@Model.Notifications.Count()</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Chưa đọc:</span>
+                        <span class="text-white">@Model.Notifications.Count(n => !n.IsRead)</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Đã đọc:</span>
+                        <span class="text-white">@Model.Notifications.Count(n => n.IsRead)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Card -->
+            <div class="card bg-dark border-gold">
+                <div class="card-body">
+                    <h5 class="text-gold mb-4">Lọc thông báo</h5>
+                    <form method="get">
+                        <div class="mb-3">
+                            <label class="form-label text-white">Loại thông báo</label>
+                            <select name="type" class="form-select bg-dark text-white border-secondary" onchange="this.form.submit()">
+                                <option value="">Tất cả</option>
+                                <option value="NewRegistration" selected="@(Model.Type == "NewRegistration")">Đăng ký mới</option>
+                                <option value="CancelRegistration" selected="@(Model.Type == "CancelRegistration")">Hủy đăng ký</option>
+                                <option value="EventUpdate" selected="@(Model.Type == "EventUpdate")">Cập nhật sự kiện</option>
+                                <option value="EventCancelled" selected="@(Model.Type == "EventCancelled")">Sự kiện bị hủy</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white">Trạng thái</label>
+                            <select name="status" class="form-select bg-dark text-white border-secondary" onchange="this.form.submit()">
+                                <option value="">Tất cả</option>
+                                <option value="unread" selected="@(Model.Status == "unread")">Chưa đọc</option>
+                                <option value="read" selected="@(Model.Status == "read")">Đã đọc</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .list-group-item {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .list-group-item:hover {
+            background-color: #2F2F2F !important;
+        }
+
+        .list-group-item.unread {
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        // Connect to SignalR hub
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/notificationHub")
+            .withAutomaticReconnect()
+            .build();
+
+        // Join user group
+        const userId = '@Context.Session.GetInt32("UserId")';
+        if (userId) {
+            connection.start()
+                .then(() => connection.invoke("JoinUserGroup", userId))
+                .catch(err => console.error(err));
+        }
+
+        // Handle incoming notifications
+        connection.on("ReceiveNotification", notification => {
+            // Update notification count
+            const count = parseInt(document.getElementById('notificationCount').textContent) + 1;
+            document.getElementById('notificationCount').textContent = count;
+            document.getElementById('notificationCount').style.display = 'inline';
+
+            // Show toast
+            const toast = new bootstrap.Toast(document.getElementById('notificationToast'));
+            document.getElementById('notificationTitle').textContent = notification.title;
+            document.getElementById('notificationBody').textContent = notification.body;
+            document.getElementById('notificationTime').textContent = 'Vừa xong';
+            toast.show();
+
+            // Add to list if on notifications page
+            const list = document.querySelector('.list-group');
+            if (list) {
+                const item = document.createElement('div');
+                item.className = 'list-group-item bg-dark border-secondary unread';
+                item.onclick = () => markAsRead(notification.notificationId, notification.link);
+                item.innerHTML = `
+                    <div class="d-flex w-100 justify-content-between align-items-start mb-2">
+                        <h5 class="mb-1 text-gold">
+                            <i class="fas fa-circle text-warning me-2" style="font-size: 8px;"></i>
+                            ${notification.title}
+                        </h5>
+                        <small class="text-muted">Vừa xong</small>
+                    </div>
+                    <p class="mb-2 text-white">${notification.body}</p>
+                `;
+                list.insertBefore(item, list.firstChild);
+
+                // Update stats
+                const totalCount = document.querySelector('.card:first-of-type .text-white');
+                const unreadCount = document.querySelector('.card:first-of-type .text-white:nth-of-type(2)');
+                if (totalCount) totalCount.textContent = parseInt(totalCount.textContent) + 1;
+                if (unreadCount) unreadCount.textContent = parseInt(unreadCount.textContent) + 1;
+            }
+        });
+
+        // Mark notification as read
+        function markAsRead(notificationId, link) {
+            fetch(`/Notifications?handler=MarkAsRead&notificationId=${notificationId}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(() => {
+                if (link) {
+                    window.location.href = link;
+                } else {
+                    window.location.reload();
+                }
+            })
+            .catch(err => console.error(err));
+        }
+    </script>
+} 

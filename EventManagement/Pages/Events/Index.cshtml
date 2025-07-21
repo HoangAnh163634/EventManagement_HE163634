@@ -1,0 +1,282 @@
+@page
+@model EventManagement.Pages.Events.IndexModel
+@{
+    ViewData["Title"] = "Sự kiện";
+}
+
+<div class="container py-5">
+    <!-- Search and Filter Section -->
+    <div class="card bg-dark border-gold mb-4">
+        <div class="card-header bg-gold text-dark">
+            <h4 class="mb-0">
+                <i class="fas fa-search me-2"></i>Tìm kiếm sự kiện
+            </h4>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3" id="searchForm">
+                <!-- Basic Search -->
+                <div class="col-md-12">
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary">
+                            <i class="fas fa-search text-gold"></i>
+                        </span>
+                        <input type="text" name="searchTerm" class="form-control bg-dark text-white border-secondary" 
+                               placeholder="Tìm kiếm theo tên, mô tả, địa điểm..." value="@Model.SearchTerm">
+                        <button type="button" class="btn btn-outline-gold" data-bs-toggle="collapse" data-bs-target="#advancedSearch">
+                            <i class="fas fa-sliders-h me-2"></i>Lọc nâng cao
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Advanced Search -->
+                <div class="col-12 collapse" id="advancedSearch">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- Event Type -->
+                                <div class="col-md-4">
+                                    <label class="form-label text-white">Loại sự kiện</label>
+                                    <select name="eventTypeId" class="form-select bg-dark text-white border-secondary" asp-items="@Model.EventTypeList">
+                                        <option value="">-- Tất cả loại sự kiện --</option>
+                                    </select>
+                                </div>
+
+                                <!-- Status -->
+                                <div class="col-md-4">
+                                    <label class="form-label text-white">Trạng thái</label>
+                                    <select name="status" class="form-select bg-dark text-white border-secondary" asp-items="@Model.StatusList">
+                                        <option value="">-- Tất cả trạng thái --</option>
+                                    </select>
+                                </div>
+
+                                <!-- Price Range -->
+                                <div class="col-md-4">
+                                    <label class="form-label text-white">Giá vé</label>
+                                    <select name="priceRange" class="form-select bg-dark text-white border-secondary">
+                                        <option value="">-- Tất cả mức giá --</option>
+                                        <option value="free" selected="@(Model.PriceRange == "free")">Miễn phí</option>
+                                        <option value="paid" selected="@(Model.PriceRange == "paid")">Có phí</option>
+                                        <option value="0-100000" selected="@(Model.PriceRange == "0-100000")">Dưới 100,000đ</option>
+                                        <option value="100000-500000" selected="@(Model.PriceRange == "100000-500000")">100,000đ - 500,000đ</option>
+                                        <option value="500000+" selected="@(Model.PriceRange == "500000+")">Trên 500,000đ</option>
+                                    </select>
+                                </div>
+
+                                <!-- Date Range -->
+                                <div class="col-md-6">
+                                    <label class="form-label text-white">Từ ngày</label>
+                                    <input type="date" name="startDate" class="form-control bg-dark text-white border-secondary" 
+                                           value="@(Model.StartDate?.ToString("yyyy-MM-dd"))">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-white">Đến ngày</label>
+                                    <input type="date" name="endDate" class="form-control bg-dark text-white border-secondary" 
+                                           value="@(Model.EndDate?.ToString("yyyy-MM-dd"))">
+                                </div>
+
+                                <!-- Sort -->
+                                <div class="col-md-6">
+                                    <label class="form-label text-white">Sắp xếp theo</label>
+                                    <select name="sortBy" class="form-select bg-dark text-white border-secondary">
+                                        <option value="date" selected="@(Model.SortBy == "date")">Ngày diễn ra</option>
+                                        <option value="name" selected="@(Model.SortBy == "name")">Tên sự kiện</option>
+                                        <option value="price" selected="@(Model.SortBy == "price")">Giá vé</option>
+                                        <option value="registrations" selected="@(Model.SortBy == "registrations")">Số người đăng ký</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-white">Thứ tự</label>
+                                    <select name="sortOrder" class="form-select bg-dark text-white border-secondary">
+                                        <option value="asc" selected="@(Model.SortOrder == "asc")">Tăng dần</option>
+                                        <option value="desc" selected="@(Model.SortOrder == "desc")">Giảm dần</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Actions -->
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <!-- Active Filters -->
+                        <div>
+                            @if (Model.HasActiveFilters)
+                            {
+                                <a href="/Events" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-times me-2"></i>Xóa bộ lọc
+                                </a>
+                            }
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="submit" class="btn btn-gold">
+                            <i class="fas fa-search me-2"></i>Tìm kiếm
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Count -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-gold mb-0">
+            <i class="fas fa-calendar-alt me-2"></i>
+            @if (Model.HasActiveFilters)
+            {
+                <span>@Model.Events.Count() kết quả tìm kiếm</span>
+            }
+            else
+            {
+                <span>Tất cả sự kiện</span>
+            }
+        </h4>
+
+        @if (User.Identity?.IsAuthenticated == true && Context.Session.GetString("UserEmailVerified") == "true")
+        {
+            var userRole = Context.Session.GetString("UserRole");
+            if (userRole == "Admin" || userRole == "Organizer")
+            {
+                <a href="/Events/Create" class="btn btn-gold">
+                    <i class="fas fa-plus me-2"></i>Tạo sự kiện mới
+                </a>
+            }
+        }
+    </div>
+
+    <!-- Events Grid -->
+    <div class="row g-4">
+        @foreach (var evt in Model.Events)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 bg-dark border-gold event-card">
+                    @if (!string.IsNullOrEmpty(evt.BannerImageUrl))
+                    {
+                        <img src="@evt.BannerImageUrl" class="card-img-top" alt="@evt.EventName" style="height: 200px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-calendar-alt fa-3x text-gold"></i>
+                        </div>
+                    }
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title text-gold mb-0">@evt.EventName</h5>
+                            <span class="badge bg-@Model.GetStatusClass(evt.Status)">@evt.Status</span>
+                        </div>
+                        <p class="card-text text-muted mb-2">
+                            <i class="fas fa-map-marker-alt me-2"></i>@evt.Location
+                        </p>
+                        <p class="card-text text-muted mb-2">
+                            <i class="fas fa-calendar me-2"></i>@evt.StartDate.ToString("dd/MM/yyyy HH:mm")
+                        </p>
+                        <p class="card-text text-muted mb-2">
+                            <i class="fas fa-tag me-2"></i>
+                            @if (evt.Price.HasValue && evt.Price > 0)
+                            {
+                                <span>@evt.Price.Value.ToString("N0") @evt.Currency</span>
+                            }
+                            else
+                            {
+                                <span>Miễn phí</span>
+                            }
+                        </p>
+                        <p class="card-text text-muted mb-3">
+                            <i class="fas fa-user-friends me-2"></i>
+                            @if (evt.MaxAttendees.HasValue)
+                            {
+                                <span>@evt.Registrations.Count()/@evt.MaxAttendees chỗ</span>
+                            }
+                            else
+                            {
+                                <span>@evt.Registrations.Count() người tham gia</span>
+                            }
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>@evt.Organizer.FullName
+                            </small>
+                            <a href="/Events/Details/@evt.EventId" class="btn btn-outline-gold">
+                                <i class="fas fa-info-circle me-2"></i>Chi tiết
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Events.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Không tìm thấy sự kiện nào</h4>
+            @if (Model.HasActiveFilters)
+            {
+                <p class="text-muted mb-4">Thử thay đổi bộ lọc để tìm thấy nhiều sự kiện hơn.</p>
+                <a href="/Events" class="btn btn-outline-gold">
+                    <i class="fas fa-times me-2"></i>Xóa bộ lọc
+                </a>
+            }
+            else
+            {
+                <p class="text-muted">Chưa có sự kiện nào được tạo.</p>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // Event card hover effect
+        document.querySelectorAll('.event-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+                this.style.boxShadow = '0 5px 15px rgba(224, 198, 143, 0.3)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Date range validation
+        const startDateInput = document.querySelector('input[name="startDate"]');
+        const endDateInput = document.querySelector('input[name="endDate"]');
+
+        function validateDates() {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+
+            if (startDate && endDate && endDate < startDate) {
+                endDateInput.value = startDateInput.value;
+            }
+        }
+
+        startDateInput.addEventListener('change', validateDates);
+        endDateInput.addEventListener('change', validateDates);
+
+        // Remember advanced search state
+        const advancedSearch = document.getElementById('advancedSearch');
+        if (localStorage.getItem('showAdvancedSearch') === 'true') {
+            advancedSearch.classList.add('show');
+        }
+
+        advancedSearch.addEventListener('shown.bs.collapse', function () {
+            localStorage.setItem('showAdvancedSearch', 'true');
+        });
+
+        advancedSearch.addEventListener('hidden.bs.collapse', function () {
+            localStorage.setItem('showAdvancedSearch', 'false');
+        });
+    </script>
+} 

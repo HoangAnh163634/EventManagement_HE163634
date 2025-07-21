@@ -1,0 +1,265 @@
+@page "{id:int}"
+@model EventManagement.Pages.Events.DashboardModel
+@{
+    ViewData["Title"] = "Dashboard sự kiện";
+}
+
+<div class="container py-5">
+    @if (Model.Event != null)
+    {
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Event Info -->
+                <div class="card bg-dark border-gold mb-4">
+                    <div class="card-header bg-gold text-dark">
+                        <h4 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Dashboard sự kiện
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h5 class="text-gold">@Model.Event.EventName</h5>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-calendar me-2"></i>@Model.Event.StartDate.ToString("dd/MM/yyyy HH:mm")
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-map-marker-alt me-2"></i>@Model.Event.Location
+                            </p>
+                        </div>
+
+                        <!-- Registration Stats -->
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-dark border-secondary h-100">
+                                    <div class="card-body text-center">
+                                        <h3 class="text-gold mb-2">@Model.Event.Registrations.Count()</h3>
+                                        <p class="text-muted mb-0">Tổng số đăng ký</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-dark border-secondary h-100">
+                                    <div class="card-body text-center">
+                                        <h3 class="text-gold mb-2">@Model.Event.Registrations.Count(r => r.Status == "CheckedIn")</h3>
+                                        <p class="text-muted mb-0">Đã check-in</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-dark border-secondary h-100">
+                                    <div class="card-body text-center">
+                                        <h3 class="text-gold mb-2">@Model.Event.Registrations.Count(r => r.Status == "Registered")</h3>
+                                        <p class="text-muted mb-0">Chưa check-in</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-dark border-secondary h-100">
+                                    <div class="card-body text-center">
+                                        <h3 class="text-gold mb-2">@Model.Event.Registrations.Count(r => r.Status == "Cancelled")</h3>
+                                        <p class="text-muted mb-0">Đã hủy</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Registration Chart -->
+                        <div class="mb-4">
+                            <h6 class="text-gold mb-3">Thống kê đăng ký theo ngày</h6>
+                            <canvas id="registrationChart" height="200"></canvas>
+                        </div>
+
+                        <!-- Check-in Chart -->
+                        <div>
+                            <h6 class="text-gold mb-3">Thống kê check-in theo giờ</h6>
+                            <canvas id="checkInChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Feedback Stats -->
+                <div class="card bg-dark border-gold mb-4">
+                    <div class="card-body">
+                        <h5 class="text-gold mb-4">Thống kê đánh giá</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Số lượt đánh giá:</span>
+                            <span class="text-white">@Model.Event.Feedbacks.Count()</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Điểm trung bình:</span>
+                            <span class="text-white">@Model.Event.AverageRating?.ToString("N1") / 5</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Sẽ giới thiệu:</span>
+                            <span class="text-white">@Model.Event.Feedbacks.Count(f => f.WouldRecommend == true)</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Không giới thiệu:</span>
+                            <span class="text-white">@Model.Event.Feedbacks.Count(f => f.WouldRecommend == false)</span>
+                        </div>
+
+                        <!-- Rating Distribution -->
+                        <div class="mt-4">
+                            <h6 class="text-gold mb-3">Phân bố điểm đánh giá</h6>
+                            <canvas id="ratingChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Feedback -->
+                <div class="card bg-dark border-gold">
+                    <div class="card-body">
+                        <h5 class="text-gold mb-4">Đánh giá gần đây</h5>
+                        <div class="list-group list-group-flush">
+                            @foreach (var feedback in Model.Event.Feedbacks.OrderByDescending(f => f.SubmittedAt).Take(5))
+                            {
+                                <div class="list-group-item bg-dark border-secondary">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0 text-white">@feedback.Attendee.FullName</h6>
+                                        <div>
+                                            @for (int i = 0; i < feedback.Rating; i++)
+                                            {
+                                                <i class="fas fa-star text-warning"></i>
+                                            }
+                                            @for (int i = feedback.Rating ?? 0; i < 5; i++)
+                                            {
+                                                <i class="far fa-star text-warning"></i>
+                                            }
+                                        </div>
+                                    </div>
+                                    <p class="text-muted mb-2">@feedback.Comments</p>
+                                    <small class="text-muted">@Model.GetTimeAgo(feedback.SubmittedAt)</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-chart-line fa-4x text-muted mb-4"></i>
+            <h3 class="text-muted">Không tìm thấy sự kiện</h3>
+            <p class="text-muted mb-4">Sự kiện này không tồn tại hoặc đã bị xóa.</p>
+            <a href="/Events" class="btn btn-outline-gold">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+            </a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Registration Chart
+        const registrationCtx = document.getElementById('registrationChart').getContext('2d');
+        new Chart(registrationCtx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.RegistrationDates)),
+                datasets: [{
+                    label: 'Số lượt đăng ký',
+                    data: @Html.Raw(Json.Serialize(Model.RegistrationCounts)),
+                    borderColor: '#E0C68F',
+                    backgroundColor: 'rgba(224, 198, 143, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Check-in Chart
+        const checkInCtx = document.getElementById('checkInChart').getContext('2d');
+        new Chart(checkInCtx, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.CheckInHours)),
+                datasets: [{
+                    label: 'Số lượt check-in',
+                    data: @Html.Raw(Json.Serialize(Model.CheckInCounts)),
+                    backgroundColor: '#E0C68F',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Rating Chart
+        const ratingCtx = document.getElementById('ratingChart').getContext('2d');
+        new Chart(ratingCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['5 sao', '4 sao', '3 sao', '2 sao', '1 sao'],
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.RatingCounts)),
+                    backgroundColor: [
+                        '#28a745',
+                        '#17a2b8',
+                        '#ffc107',
+                        '#fd7e14',
+                        '#dc3545'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+} 

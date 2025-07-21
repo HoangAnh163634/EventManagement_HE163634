@@ -1,0 +1,253 @@
+@page "{id:int}"
+@model EventManagement.Pages.Events.EditModel
+@{
+    ViewData["Title"] = "Chỉnh sửa sự kiện";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card bg-dark border-gold">
+                <div class="card-header bg-gold text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>Chỉnh sửa sự kiện
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="editEventForm">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        <input type="hidden" asp-for="Event.EventId" />
+
+                        <!-- Event Name -->
+                        <div class="mb-3">
+                            <label asp-for="Event.EventName" class="form-label text-white"></label>
+                            <input asp-for="Event.EventName" class="form-control bg-dark text-white border-secondary" />
+                            <span asp-validation-for="Event.EventName" class="text-danger"></span>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label asp-for="Event.Description" class="form-label text-white"></label>
+                            <textarea asp-for="Event.Description" class="form-control bg-dark text-white border-secondary" rows="4"></textarea>
+                            <span asp-validation-for="Event.Description" class="text-danger"></span>
+                        </div>
+
+                        <!-- Event Type -->
+                        <div class="mb-3">
+                            <label asp-for="Event.EventTypeId" class="form-label text-white"></label>
+                            <select asp-for="Event.EventTypeId" class="form-select bg-dark text-white border-secondary" 
+                                    asp-items="@(new SelectList(Model.Event.EventTypes, "EventTypeId", "EventTypeName"))">
+                                <option value="">-- Chọn loại sự kiện --</option>
+                            </select>
+                            <span asp-validation-for="Event.EventTypeId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Date and Time -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Event.StartDate" class="form-label text-white"></label>
+                                <input asp-for="Event.StartDate" class="form-control bg-dark text-white border-secondary" type="datetime-local" />
+                                <span asp-validation-for="Event.StartDate" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Event.EndDate" class="form-label text-white"></label>
+                                <input asp-for="Event.EndDate" class="form-control bg-dark text-white border-secondary" type="datetime-local" />
+                                <span asp-validation-for="Event.EndDate" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Event.Location" class="form-label text-white"></label>
+                                <input asp-for="Event.Location" class="form-control bg-dark text-white border-secondary" />
+                                <span asp-validation-for="Event.Location" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Event.Address" class="form-label text-white"></label>
+                                <input asp-for="Event.Address" class="form-control bg-dark text-white border-secondary" />
+                                <span asp-validation-for="Event.Address" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- Privacy Settings -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Event.PrivacyLevel" class="form-label text-white"></label>
+                                <select asp-for="Event.PrivacyLevel" class="form-select bg-dark text-white border-secondary"
+                                        asp-items="@(new SelectList(Model.Event.PrivacyLevels))">
+                                </select>
+                                <span asp-validation-for="Event.PrivacyLevel" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Event.MaxAttendees" class="form-label text-white"></label>
+                                <input asp-for="Event.MaxAttendees" class="form-control bg-dark text-white border-secondary" type="number" min="1" />
+                                <span asp-validation-for="Event.MaxAttendees" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="mb-3">
+                            <label asp-for="Event.Status" class="form-label text-white"></label>
+                            <select asp-for="Event.Status" class="form-select bg-dark text-white border-secondary"
+                                    asp-items="@(new SelectList(Model.Event.Statuses))">
+                            </select>
+                            <span asp-validation-for="Event.Status" class="text-danger"></span>
+                        </div>
+
+                        <!-- Registration Deadline -->
+                        <div class="mb-3">
+                            <label asp-for="Event.RegistrationDeadline" class="form-label text-white"></label>
+                            <input asp-for="Event.RegistrationDeadline" class="form-control bg-dark text-white border-secondary" type="datetime-local" />
+                            <span asp-validation-for="Event.RegistrationDeadline" class="text-danger"></span>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Event.Price" class="form-label text-white"></label>
+                                <input asp-for="Event.Price" class="form-control bg-dark text-white border-secondary" type="number" min="0" step="1000" />
+                                <span asp-validation-for="Event.Price" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Event.Currency" class="form-label text-white"></label>
+                                <select asp-for="Event.Currency" class="form-select bg-dark text-white border-secondary"
+                                        asp-items="@(new SelectList(Model.Event.Currencies))">
+                                </select>
+                                <span asp-validation-for="Event.Currency" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- Current Banner -->
+                        @if (!string.IsNullOrEmpty(Model.Event.BannerImageUrl))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label text-white">Banner hiện tại</label>
+                                <div class="position-relative">
+                                    <img src="@Model.Event.BannerImageUrl" class="img-fluid rounded" alt="Current banner">
+                                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" 
+                                            onclick="removeBanner()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Banner Image -->
+                        <div class="mb-3">
+                            <label asp-for="Event.BannerImage" class="form-label text-white"></label>
+                            <input asp-for="Event.BannerImage" class="form-control bg-dark text-white border-secondary" type="file" accept="image/*" />
+                            <span asp-validation-for="Event.BannerImage" class="text-danger"></span>
+                            <small class="text-muted">Recommended size: 1200x600px, max 5MB</small>
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="mb-4">
+                            <label asp-for="Event.Tags" class="form-label text-white"></label>
+                            <input asp-for="Event.Tags" class="form-control bg-dark text-white border-secondary" placeholder="Nhập tags, phân cách bằng dấu phẩy" />
+                            <span asp-validation-for="Event.Tags" class="text-danger"></span>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="/Events/Details/@Model.Event.EventId" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-gold" id="submitButton" disabled>
+                                <i class="fas fa-save me-2"></i>Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Form validation
+        const form = document.getElementById('editEventForm');
+        const submitButton = document.getElementById('submitButton');
+
+        function validateForm() {
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.value) {
+                    isValid = false;
+                }
+            });
+
+            // Validate dates
+            const startDate = new Date(form.querySelector('#Event_StartDate').value);
+            const endDate = new Date(form.querySelector('#Event_EndDate').value);
+            const regDeadline = form.querySelector('#Event_RegistrationDeadline').value 
+                ? new Date(form.querySelector('#Event_RegistrationDeadline').value)
+                : null;
+
+            if (endDate <= startDate) {
+                isValid = false;
+            }
+
+            if (regDeadline && regDeadline >= startDate) {
+                isValid = false;
+            }
+
+            submitButton.disabled = !isValid;
+        }
+
+        // Add validation to all form fields
+        form.querySelectorAll('input, select, textarea').forEach(field => {
+            field.addEventListener('change', validateForm);
+            field.addEventListener('keyup', validateForm);
+        });
+
+        // Initialize validation
+        validateForm();
+
+        // Preview image
+        document.getElementById('Event_BannerImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    e.target.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        if (this.width < 1200 || this.height < 600) {
+                            alert('Image should be at least 1200x600px');
+                        }
+                    }
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Remove banner
+        function removeBanner() {
+            if (confirm('Are you sure you want to remove the current banner?')) {
+                // Add a hidden input to indicate banner removal
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'RemoveBanner';
+                input.value = 'true';
+                form.appendChild(input);
+                
+                // Hide the current banner
+                const bannerContainer = document.querySelector('.banner-container');
+                if (bannerContainer) {
+                    bannerContainer.style.display = 'none';
+                }
+            }
+        }
+    </script>
+} 

@@ -1,0 +1,316 @@
+@page
+@model EventManagement.Pages.Admin.EventTypes.IndexModel
+@{
+    ViewData["Title"] = "Quản lý loại sự kiện";
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-gold mb-0">
+            <i class="fas fa-tags me-2"></i>Quản lý loại sự kiện
+        </h2>
+        <button type="button" class="btn btn-gold" data-bs-toggle="modal" data-bs-target="#createModal">
+            <i class="fas fa-plus me-2"></i>Thêm mới
+        </button>
+    </div>
+
+    <!-- Event Types Table -->
+    <div class="card bg-dark border-gold">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Icon</th>
+                            <th>Tên loại</th>
+                            <th>Mô tả</th>
+                            <th>Màu sắc</th>
+                            <th>Trạng thái</th>
+                            <th>Số sự kiện</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var type in Model.EventTypes)
+                        {
+                            <tr>
+                                <td>
+                                    <i class="@type.IconClass fa-2x" style="color: @type.ColorCode"></i>
+                                </td>
+                                <td>@type.EventTypeName</td>
+                                <td>@type.Description</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="color-preview me-2" style="width: 20px; height: 20px; border-radius: 4px; background-color: @type.ColorCode"></div>
+                                        <span>@type.ColorCode</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (type.IsActive)
+                                    {
+                                        <span class="badge bg-success">Đang hoạt động</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Đã vô hiệu</span>
+                                    }
+                                </td>
+                                <td>@type.Events.Count()</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-gold" 
+                                                onclick="showEditModal('@type.EventTypeId', '@type.EventTypeName', '@type.Description', '@type.IconClass', '@type.ColorCode', @type.IsActive.ToString().ToLower())">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        @if (!type.Events.Any())
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="showDeleteModal('@type.EventTypeId', '@type.EventTypeName')">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                    onclick="toggleStatus('@type.EventTypeId', '@type.EventTypeName', @(!type.IsActive).ToString().ToLower())">
+                                                @if (type.IsActive)
+                                                {
+                                                    <i class="fas fa-ban" title="Vô hiệu hóa"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fas fa-check" title="Kích hoạt"></i>
+                                                }
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-gold">
+            <div class="modal-header border-gold">
+                <h5 class="modal-title text-gold">Thêm loại sự kiện mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-white">Tên loại sự kiện</label>
+                        <input type="text" name="eventTypeName" class="form-control bg-dark text-white border-secondary" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white">Mô tả</label>
+                        <textarea name="description" class="form-control bg-dark text-white border-secondary" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white">Icon (Font Awesome)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary">
+                                <i class="fas fa-icons text-gold"></i>
+                            </span>
+                            <input type="text" name="iconClass" class="form-control bg-dark text-white border-secondary" 
+                                   placeholder="fas fa-calendar" required>
+                        </div>
+                        <small class="text-muted">Chọn icon từ <a href="https://fontawesome.com/icons" target="_blank" class="text-gold">Font Awesome</a></small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white">Màu sắc</label>
+                        <div class="input-group">
+                            <input type="color" name="colorCode" class="form-control form-control-color bg-dark border-secondary" 
+                                   value="#E0C68F" title="Chọn màu">
+                            <input type="text" name="colorCodeText" class="form-control bg-dark text-white border-secondary" 
+                                   value="#E0C68F" pattern="^#[0-9A-Fa-f]{6}$" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-gold">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-gold">
+                        <i class="fas fa-save me-2"></i>Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-gold">
+            <div class="modal-header border-gold">
+                <h5 class="modal-title text-gold">Chỉnh sửa loại sự kiện</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Edit">
+                <div class="modal-body">
+                    <input type="hidden" name="eventTypeId" id="editEventTypeId">
+                    <div class="mb-3">
+                        <label class="form-label text-white">Tên loại sự kiện</label>
+                        <input type="text" name="eventTypeName" id="editEventTypeName" 
+                               class="form-control bg-dark text-white border-secondary" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white">Mô tả</label>
+                        <textarea name="description" id="editDescription" 
+                                  class="form-control bg-dark text-white border-secondary" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white">Icon (Font Awesome)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary">
+                                <i class="fas fa-icons text-gold"></i>
+                            </span>
+                            <input type="text" name="iconClass" id="editIconClass" 
+                                   class="form-control bg-dark text-white border-secondary" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white">Màu sắc</label>
+                        <div class="input-group">
+                            <input type="color" name="colorCode" id="editColorCode" 
+                                   class="form-control form-control-color bg-dark border-secondary" title="Chọn màu">
+                            <input type="text" name="colorCodeText" id="editColorCodeText" 
+                                   class="form-control bg-dark text-white border-secondary" 
+                                   pattern="^#[0-9A-Fa-f]{6}$" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="isActive" id="editIsActive" class="form-check-input">
+                            <label class="form-check-label text-white" for="editIsActive">Đang hoạt động</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-gold">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-gold">
+                        <i class="fas fa-save me-2"></i>Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-danger">
+            <div class="modal-header border-danger">
+                <h5 class="modal-title text-danger">Xác nhận xóa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Delete">
+                <div class="modal-body">
+                    <input type="hidden" name="eventTypeId" id="deleteEventTypeId">
+                    <p class="text-white">Bạn có chắc chắn muốn xóa loại sự kiện <strong id="deleteEventTypeName"></strong>?</p>
+                    <p class="text-muted">Hành động này không thể hoàn tác.</p>
+                </div>
+                <div class="modal-footer border-danger">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Xác nhận xóa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Toggle Status Modal -->
+<div class="modal fade" id="toggleStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-warning">
+            <div class="modal-header border-warning">
+                <h5 class="modal-title text-warning">Xác nhận thay đổi trạng thái</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="ToggleStatus">
+                <div class="modal-body">
+                    <input type="hidden" name="eventTypeId" id="toggleEventTypeId">
+                    <input type="hidden" name="isActive" id="toggleIsActive">
+                    <p class="text-white">Bạn có chắc chắn muốn <span id="toggleAction"></span> loại sự kiện <strong id="toggleEventTypeName"></strong>?</p>
+                    <p class="text-muted">Điều này sẽ ảnh hưởng đến việc tạo sự kiện mới.</p>
+                </div>
+                <div class="modal-footer border-warning">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-check me-2"></i>Xác nhận
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Color picker sync
+        function syncColorInputs(colorInput, textInput) {
+            colorInput.value = textInput.value;
+            textInput.value = colorInput.value;
+        }
+
+        document.querySelectorAll('input[type="color"]').forEach(colorInput => {
+            const textInput = colorInput.nextElementSibling;
+            
+            colorInput.addEventListener('input', () => syncColorInputs(colorInput, textInput));
+            textInput.addEventListener('input', () => syncColorInputs(colorInput, textInput));
+        });
+
+        // Show edit modal
+        function showEditModal(id, name, description, iconClass, colorCode, isActive) {
+            document.getElementById('editEventTypeId').value = id;
+            document.getElementById('editEventTypeName').value = name;
+            document.getElementById('editDescription').value = description;
+            document.getElementById('editIconClass').value = iconClass;
+            document.getElementById('editColorCode').value = colorCode;
+            document.getElementById('editColorCodeText').value = colorCode;
+            document.getElementById('editIsActive').checked = isActive === 'true';
+
+            var modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+        }
+
+        // Show delete modal
+        function showDeleteModal(id, name) {
+            document.getElementById('deleteEventTypeId').value = id;
+            document.getElementById('deleteEventTypeName').textContent = name;
+
+            var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        // Show toggle status modal
+        function toggleStatus(id, name, newStatus) {
+            document.getElementById('toggleEventTypeId').value = id;
+            document.getElementById('toggleEventTypeName').textContent = name;
+            document.getElementById('toggleIsActive').value = newStatus;
+            document.getElementById('toggleAction').textContent = newStatus === 'true' ? 'kích hoạt' : 'vô hiệu hóa';
+
+            var modal = new bootstrap.Modal(document.getElementById('toggleStatusModal'));
+            modal.show();
+        }
+
+        // Preview icon
+        function previewIcon(input) {
+            const preview = input.previousElementSibling.querySelector('i');
+            preview.className = input.value;
+        }
+
+        document.querySelectorAll('input[name="iconClass"]').forEach(input => {
+            input.addEventListener('input', () => previewIcon(input));
+        });
+    </script>
+} 

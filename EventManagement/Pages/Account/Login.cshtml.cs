@@ -35,7 +35,7 @@ public class LoginModel : PageModel
         public string? ReturnUrl { get; set; }
     }
 
-    public async Task OnGetAsync(string? returnUrl = null)
+    public void OnGet(string? returnUrl = null)
     {
         ReturnUrl = returnUrl;
         Input.ReturnUrl = returnUrl;

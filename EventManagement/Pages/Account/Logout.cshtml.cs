@@ -1,17 +1,25 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 
 namespace EventManagement.Pages.Account;
 
 public class LogoutModel : PageModel
 {
-    public async Task<IActionResult> OnGetAsync()
+    private readonly ILogger<LogoutModel> _logger;
+
+    public LogoutModel(ILogger<LogoutModel> logger)
     {
-        // Allow GET logout for convenience
-        return await OnPostAsync();
+        _logger = logger;
     }
 
-    public async Task<IActionResult> OnPostAsync()
+    public IActionResult OnGet()
+    {
+        // Allow GET logout for convenience
+        return OnPost();
+    }
+
+    public IActionResult OnPost()
     {
         try
         {
@@ -25,7 +33,8 @@ public class LogoutModel : PageModel
         }
         catch (Exception ex)
         {
-            // Log error in production
+            // Log error
+            _logger.LogError(ex, "Error occurred during logout");
             TempData["ErrorMessage"] = "An error occurred during logout. Please try again.";
             return RedirectToPage("/Index");
         }

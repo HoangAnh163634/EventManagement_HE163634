@@ -1,0 +1,325 @@
+@page
+@model EventManagement.Pages.Events.MyRegistrationsModel
+@{
+    ViewData["Title"] = "Sự kiện đã đăng ký";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <h2 class="text-gold mb-4">
+                <i class="fas fa-ticket-alt me-2"></i>Sự kiện đã đăng ký
+            </h2>
+
+            @if (Model.Registrations.Any())
+            {
+                <!-- Registration Cards -->
+                <div class="row g-4">
+                    @foreach (var registration in Model.Registrations)
+                    {
+                        <div class="col-12">
+                            <div class="card bg-dark border-gold h-100">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <!-- Event Info -->
+                                        <div class="col-md-8">
+                                            <h5 class="text-gold mb-2">@registration.Event.EventName</h5>
+                                            <p class="text-muted mb-2">
+                                                <i class="fas fa-calendar me-2"></i>@registration.Event.StartDate.ToString("dd/MM/yyyy HH:mm")
+                                            </p>
+                                            <p class="text-muted mb-2">
+                                                <i class="fas fa-map-marker-alt me-2"></i>@registration.Event.Location
+                                            </p>
+                                            <p class="text-muted mb-3">
+                                                <i class="fas fa-clock me-2"></i>Đăng ký: @registration.RegistrationDate.ToString("dd/MM/yyyy HH:mm")
+                                            </p>
+                                            @if (!string.IsNullOrEmpty(registration.SpecialRequests))
+                                            {
+                                                <p class="text-muted mb-0">
+                                                    <i class="fas fa-info-circle me-2"></i>@registration.SpecialRequests
+                                                </p>
+                                            }
+                                        </div>
+
+                                        <!-- Status & Actions -->
+                                        <div class="col-md-4 text-md-end">
+                                            <span class="badge bg-@Model.GetStatusClass(registration.Status) mb-3">@registration.Status</span>
+
+                                            @if (registration.Status == "Registered")
+                                            {
+                                                @if (registration.Event.StartDate > DateTime.UtcNow)
+                                                {
+                                                    <div class="d-grid gap-2">
+                                                        @if (registration.Qrcode != null)
+                                                        {
+                                                            <button type="button" class="btn btn-outline-gold btn-sm" 
+                                                                    onclick="showQrCode('@registration.Qrcode.QrcodeImageUrl', '@registration.Event.EventName')">
+                                                                <i class="fas fa-qrcode me-2"></i>Xem QR Code
+                                                            </button>
+                                                        }
+                                                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                                onclick="showCancelModal(@registration.RegistrationId, '@registration.Event.EventName')">
+                                                            <i class="fas fa-times me-2"></i>Hủy đăng ký
+                                                        </button>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <p class="text-muted mb-0">
+                                                        <i class="fas fa-info-circle me-2"></i>Đã quá hạn hủy đăng ký
+                                                    </p>
+                                                }
+                                            }
+                                            else if (registration.Status == "CheckedIn")
+                                            {
+                                                <p class="text-muted mb-2">
+                                                    <i class="fas fa-clock me-2"></i>Check-in: @registration.CheckInTime?.ToString("dd/MM/yyyy HH:mm")
+                                                </p>
+                                                @if (!registration.Feedback.Any())
+                                                {
+                                                    <button type="button" class="btn btn-outline-gold btn-sm" 
+                                                            onclick="showFeedbackModal(@registration.RegistrationId, '@registration.Event.EventName')">
+                                                        <i class="fas fa-star me-2"></i>Đánh giá
+                                                    </button>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <!-- Empty State -->
+                <div class="text-center py-5">
+                    <i class="fas fa-ticket-alt fa-4x text-muted mb-4"></i>
+                    <h3 class="text-muted">Chưa có sự kiện nào</h3>
+                    <p class="text-muted mb-4">Bạn chưa đăng ký tham gia sự kiện nào.</p>
+                    <a href="/Events" class="btn btn-outline-gold">
+                        <i class="fas fa-calendar-alt me-2"></i>Xem danh sách sự kiện
+                    </a>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Stats Card -->
+            <div class="card bg-dark border-gold mb-4">
+                <div class="card-body">
+                    <h5 class="text-gold mb-4">Thống kê</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Tổng số sự kiện:</span>
+                        <span class="text-white">@Model.Registrations.Count()</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Đã check-in:</span>
+                        <span class="text-white">@Model.Registrations.Count(r => r.Status == "CheckedIn")</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Đã hủy:</span>
+                        <span class="text-white">@Model.Registrations.Count(r => r.Status == "Cancelled")</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Đã đánh giá:</span>
+                        <span class="text-white">@Model.Registrations.Count(r => r.Feedback.Any())</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Events -->
+            <div class="card bg-dark border-gold">
+                <div class="card-body">
+                    <h5 class="text-gold mb-4">Sự kiện sắp diễn ra</h5>
+                    @{
+                        var upcomingEvents = Model.Registrations
+                            .Where(r => r.Status == "Registered" && r.Event.StartDate > DateTime.UtcNow)
+                            .OrderBy(r => r.Event.StartDate)
+                            .Take(3);
+                    }
+                    @if (upcomingEvents.Any())
+                    {
+                        foreach (var registration in upcomingEvents)
+                        {
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-dark border-gold rounded p-2 text-center" style="min-width: 60px;">
+                                        <small class="text-muted d-block">@registration.Event.StartDate.ToString("MMM")</small>
+                                        <span class="text-gold">@registration.Event.StartDate.ToString("dd")</span>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-white mb-1">@registration.Event.EventName</h6>
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-map-marker-alt me-2"></i>@registration.Event.Location
+                                    </p>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Không có sự kiện sắp diễn ra.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrCodeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-gold">
+            <div class="modal-header border-gold">
+                <h5 class="modal-title text-gold">QR Code Check-in</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="qrCodeImage" src="" alt="QR Code" class="img-fluid mb-3">
+                <p class="text-muted mb-0">Vui lòng xuất trình QR code này khi check-in tại sự kiện.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-danger">
+            <div class="modal-header border-danger">
+                <h5 class="modal-title text-danger">Xác nhận hủy đăng ký</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Cancel">
+                <div class="modal-body">
+                    <input type="hidden" id="cancelRegistrationId" name="registrationId">
+                    <p class="text-white">Bạn có chắc chắn muốn hủy đăng ký tham gia sự kiện <strong id="cancelEventName"></strong>?</p>
+                    <div class="mb-3">
+                        <label for="cancelReason" class="form-label text-white">Lý do hủy</label>
+                        <textarea id="cancelReason" name="reason" class="form-control bg-dark text-white border-secondary" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-danger">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times me-2"></i>Xác nhận hủy
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-gold">
+            <div class="modal-header border-gold">
+                <h5 class="modal-title text-gold">Đánh giá sự kiện</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Feedback">
+                <div class="modal-body">
+                    <input type="hidden" id="feedbackRegistrationId" name="registrationId">
+                    <p class="text-white mb-4">Đánh giá của bạn về sự kiện <strong id="feedbackEventName"></strong></p>
+
+                    <div class="mb-3">
+                        <label class="form-label text-white">Đánh giá</label>
+                        <div class="rating">
+                            @for (int i = 5; i >= 1; i--)
+                            {
+                                <input type="radio" name="rating" value="@i" id="star@i">
+                                <label for="star@i"><i class="fas fa-star"></i></label>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="feedbackComments" class="form-label text-white">Nhận xét</label>
+                        <textarea id="feedbackComments" name="comments" class="form-control bg-dark text-white border-secondary" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="feedbackSuggestions" class="form-label text-white">Góp ý cải thiện</label>
+                        <textarea id="feedbackSuggestions" name="suggestions" class="form-control bg-dark text-white border-secondary" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="wouldRecommend" name="wouldRecommend">
+                        <label class="form-check-label text-white" for="wouldRecommend">
+                            Tôi sẽ giới thiệu sự kiện này cho người khác
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer border-gold">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-gold">
+                        <i class="fas fa-paper-plane me-2"></i>Gửi đánh giá
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Rating stars */
+        .rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+
+        .rating input {
+            display: none;
+        }
+
+        .rating label {
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            margin-bottom: 0;
+            color: #6c757d;
+            transition: color 0.2s;
+        }
+
+        .rating label:hover,
+        .rating label:hover ~ label,
+        .rating input:checked ~ label {
+            color: #ffc107;
+        }
+
+        .rating label i {
+            font-size: 24px;
+            line-height: 40px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function showQrCode(imageUrl, eventName) {
+            document.getElementById('qrCodeImage').src = imageUrl;
+            var modal = new bootstrap.Modal(document.getElementById('qrCodeModal'));
+            modal.show();
+        }
+
+        function showCancelModal(registrationId, eventName) {
+            document.getElementById('cancelRegistrationId').value = registrationId;
+            document.getElementById('cancelEventName').textContent = eventName;
+            var modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+            modal.show();
+        }
+
+        function showFeedbackModal(registrationId, eventName) {
+            document.getElementById('feedbackRegistrationId').value = registrationId;
+            document.getElementById('feedbackEventName').textContent = eventName;
+            var modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+            modal.show();
+        }
+    </script>
+} 

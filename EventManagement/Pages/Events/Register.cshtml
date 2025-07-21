@@ -1,0 +1,149 @@
+@page "{id:int}"
+@model EventManagement.Pages.Events.RegisterModel
+@{
+    ViewData["Title"] = "Đăng ký tham gia sự kiện";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            @if (Model.Event != null)
+            {
+                <div class="card bg-dark border-gold mb-4">
+                    <div class="card-header bg-gold text-dark">
+                        <h4 class="mb-0">
+                            <i class="fas fa-ticket-alt me-2"></i>Đăng ký tham gia sự kiện
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Event Info -->
+                        <div class="mb-4">
+                            <h5 class="text-gold">Thông tin sự kiện</h5>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <p class="text-white mb-1">@Model.Event.EventName</p>
+                                    <p class="text-muted mb-1">
+                                        <i class="fas fa-calendar me-2"></i>@Model.Event.StartDate.ToString("dd/MM/yyyy HH:mm")
+                                    </p>
+                                    <p class="text-muted mb-1">
+                                        <i class="fas fa-map-marker-alt me-2"></i>@Model.Event.Location
+                                    </p>
+                                    @if (Model.Event.Price.HasValue && Model.Event.Price > 0)
+                                    {
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-tag me-2"></i>@Model.Event.Price.Value.ToString("N0") @Model.Event.Currency
+                                        </p>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-tag me-2"></i>Miễn phí
+                                        </p>
+                                    }
+                                </div>
+                                <div class="col-md-4 text-md-end">
+                                    @if (Model.Event.MaxAttendees.HasValue)
+                                    {
+                                        <p class="text-muted mb-1">
+                                            <i class="fas fa-users me-2"></i>@Model.Event.Registrations.Count() / @Model.Event.MaxAttendees chỗ
+                                        </p>
+                                        <div class="progress bg-secondary mb-2">
+                                            <div class="progress-bar bg-gold" role="progressbar" 
+                                                 style="width: @(Model.Event.Registrations.Count() * 100 / Model.Event.MaxAttendees.Value)%">
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-users me-2"></i>@Model.Event.Registrations.Count() người đã đăng ký
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="border-secondary my-4">
+
+                        <!-- Registration Form -->
+                        <form method="post" id="registrationForm">
+                            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                            <!-- Special Requests -->
+                            <div class="mb-4">
+                                <label asp-for="Registration.SpecialRequests" class="form-label text-white"></label>
+                                <textarea asp-for="Registration.SpecialRequests" class="form-control bg-dark text-white border-secondary" 
+                                          rows="3" placeholder="Nhập yêu cầu đặc biệt của bạn (nếu có)"></textarea>
+                                <span asp-validation-for="Registration.SpecialRequests" class="text-danger"></span>
+                            </div>
+
+                            <!-- Terms -->
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="agreeTerms" required>
+                                    <label class="form-check-label text-white" for="agreeTerms">
+                                        Tôi đồng ý với <a href="#" class="text-gold">điều khoản</a> và cam kết tham gia sự kiện
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="d-flex justify-content-between">
+                                <a href="/Events/Details/@Model.Event.EventId" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Quay lại
+                                </a>
+                                <button type="submit" class="btn btn-gold" id="submitButton" disabled>
+                                    <i class="fas fa-ticket-alt me-2"></i>Xác nhận đăng ký
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Important Notes -->
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body">
+                        <h5 class="text-gold mb-3">Lưu ý quan trọng</h5>
+                        <ul class="text-muted mb-0">
+                            <li class="mb-2">Vui lòng đến đúng giờ để check-in và tham gia sự kiện.</li>
+                            <li class="mb-2">Nếu không thể tham gia, hãy hủy đăng ký trước ngày diễn ra sự kiện.</li>
+                            <li class="mb-2">Bạn sẽ nhận được email xác nhận sau khi đăng ký thành công.</li>
+                            <li>Mã QR code sẽ được gửi qua email để check-in tại sự kiện.</li>
+                        </ul>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-4x text-muted mb-4"></i>
+                    <h3 class="text-muted">Không tìm thấy sự kiện</h3>
+                    <p class="text-muted mb-4">Sự kiện này không tồn tại hoặc đã bị xóa.</p>
+                    <a href="/Events" class="btn btn-outline-gold">
+                        <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Form validation
+        const form = document.getElementById('registrationForm');
+        const submitButton = document.getElementById('submitButton');
+        const agreeTerms = document.getElementById('agreeTerms');
+
+        function validateForm() {
+            submitButton.disabled = !agreeTerms.checked;
+        }
+
+        // Add validation to checkbox
+        agreeTerms.addEventListener('change', validateForm);
+
+        // Initialize validation
+        validateForm();
+    </script>
+} 

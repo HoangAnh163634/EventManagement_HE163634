@@ -1,0 +1,169 @@
+@page "{id:int}"
+@model EventManagement.Pages.Events.TicketModel
+@{
+    ViewData["Title"] = "Vé tham gia sự kiện";
+}
+
+<div class="container py-5">
+    @if (Model.Registration != null)
+    {
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card bg-dark border-gold">
+                    <div class="card-header bg-gold text-dark">
+                        <h4 class="mb-0">
+                            <i class="fas fa-ticket-alt me-2"></i>Vé tham gia sự kiện
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Event Info -->
+                        <div class="text-center mb-4">
+                            <h5 class="text-gold">@Model.Registration.Event.EventName</h5>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-calendar me-2"></i>@Model.Registration.Event.StartDate.ToString("dd/MM/yyyy HH:mm")
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-map-marker-alt me-2"></i>@Model.Registration.Event.Location
+                            </p>
+                        </div>
+
+                        <!-- QR Code -->
+                        <div class="text-center mb-4">
+                            @if (Model.Registration.Qrcode != null)
+                            {
+                                <img src="@Model.Registration.Qrcode.QrcodeImageUrl" alt="QR Code" class="img-fluid mb-3" style="max-width: 200px;">
+                                <p class="text-muted mb-0">Vui lòng xuất trình QR code này khi check-in</p>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>QR code chưa được tạo
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Attendee Info -->
+                        <div class="mb-4">
+                            <h6 class="text-gold mb-3">Thông tin người tham gia</h6>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-user me-2"></i>@Model.Registration.Attendee.FullName
+                            </p>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-envelope me-2"></i>@Model.Registration.Attendee.Email
+                            </p>
+                            @if (!string.IsNullOrEmpty(Model.Registration.Attendee.PhoneNumber))
+                            {
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-phone me-2"></i>@Model.Registration.Attendee.PhoneNumber
+                                </p>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.Registration.SpecialRequests))
+                            {
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>@Model.Registration.SpecialRequests
+                                </p>
+                            }
+                        </div>
+
+                        <!-- Registration Info -->
+                        <div class="mb-4">
+                            <h6 class="text-gold mb-3">Thông tin đăng ký</h6>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-clock me-2"></i>Đăng ký: @Model.Registration.RegistrationDate.ToString("dd/MM/yyyy HH:mm")
+                            </p>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-tag me-2"></i>Trạng thái: 
+                                <span class="badge bg-@Model.GetStatusClass(Model.Registration.Status)">@Model.Registration.Status</span>
+                            </p>
+                            @if (Model.Registration.CheckInTime.HasValue)
+                            {
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-check-circle me-2"></i>Check-in: @Model.Registration.CheckInTime.Value.ToString("dd/MM/yyyy HH:mm")
+                                </p>
+                            }
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="/Events/MyRegistrations" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại
+                            </a>
+                            <div>
+                                @if (Model.Registration.Status == "Registered")
+                                {
+                                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                                        <i class="fas fa-times me-2"></i>Hủy đăng ký
+                                    </button>
+                                }
+                                <button type="button" class="btn btn-gold ms-2" onclick="window.print()">
+                                    <i class="fas fa-print me-2"></i>In vé
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancel Modal -->
+        <div class="modal fade" id="cancelModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content bg-dark border-danger">
+                    <div class="modal-header border-danger">
+                        <h5 class="modal-title text-danger">Xác nhận hủy đăng ký</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" asp-page-handler="Cancel">
+                        <div class="modal-body">
+                            <p class="text-white">Bạn có chắc chắn muốn hủy đăng ký tham gia sự kiện này?</p>
+                            <div class="mb-3">
+                                <label class="form-label text-white">Lý do hủy</label>
+                                <textarea name="reason" class="form-control bg-dark text-white border-secondary" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-danger">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times me-2"></i>Xác nhận hủy
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-ticket-alt fa-4x text-muted mb-4"></i>
+            <h3 class="text-muted">Không tìm thấy vé</h3>
+            <p class="text-muted mb-4">Vé này không tồn tại hoặc đã bị hủy.</p>
+            <a href="/Events/MyRegistrations" class="btn btn-outline-gold">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại
+            </a>
+        </div>
+    }
+</div>
+
+@section Styles {
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .card, .card * {
+                visibility: visible;
+            }
+            .card {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none !important;
+            }
+            .btn, .modal {
+                display: none !important;
+            }
+        }
+    </style>
+} 

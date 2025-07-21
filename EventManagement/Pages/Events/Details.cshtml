@@ -1,0 +1,320 @@
+@page "{id:int}"
+@model EventManagement.Pages.Events.DetailsModel
+@{
+    ViewData["Title"] = Model.Event?.EventName ?? "Chi tiết sự kiện";
+}
+
+<div class="container py-5">
+    @if (Model.Event != null)
+    {
+        <!-- Event Banner -->
+        <div class="position-relative mb-4">
+            @if (!string.IsNullOrEmpty(Model.Event.BannerImageUrl))
+            {
+                <img src="@Model.Event.BannerImageUrl" class="w-100 rounded-3" style="max-height: 400px; object-fit: cover;" alt="@Model.Event.EventName">
+            }
+            else
+            {
+                <div class="bg-dark rounded-3 d-flex align-items-center justify-content-center" style="height: 400px;">
+                    <i class="fas fa-calendar-alt fa-5x text-gold"></i>
+                </div>
+            }
+            <div class="position-absolute bottom-0 start-0 w-100 p-4" style="background: linear-gradient(transparent, rgba(0,0,0,0.8));">
+                <div class="d-flex justify-content-between align-items-end">
+                    <div>
+                        <span class="badge bg-@Model.GetStatusClass(Model.Event.Status) mb-2">@Model.Event.Status</span>
+                        <h1 class="text-white mb-0">@Model.Event.EventName</h1>
+                    </div>
+                    <div class="text-end">
+                        @if (Model.IsOrganizer)
+                        {
+                            <a href="/Events/Edit/@Model.Event.EventId" class="btn btn-outline-gold me-2">
+                                <i class="fas fa-edit me-2"></i>Chỉnh sửa
+                            </a>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash-alt me-2"></i>Xóa
+                            </button>
+                        }
+                        else if (Model.CanRegister && Model.IsEmailVerified)
+                        {
+                            <a href="/Events/Register/@Model.Event.EventId" class="btn btn-gold">
+                                <i class="fas fa-ticket-alt me-2"></i>Đăng ký tham gia
+                            </a>
+                        }
+                        else if (!Model.IsEmailVerified)
+                        {
+                            <button class="btn btn-gold" disabled title="Bạn cần xác thực email để đăng ký">
+                                <i class="fas fa-ticket-alt me-2"></i>Đăng ký tham gia
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Info -->
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Main Info -->
+                <div class="card bg-dark border-gold mb-4">
+                    <div class="card-body">
+                        <h4 class="text-gold mb-4">Thông tin sự kiện</h4>
+                        
+                        <div class="mb-4">
+                            <h5 class="text-white mb-3">Mô tả</h5>
+                            <p class="text-muted">@Model.Event.Description</p>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5 class="text-white mb-3">Thời gian</h5>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-calendar-alt me-2"></i>Bắt đầu: @Model.Event.StartDate.ToString("dd/MM/yyyy HH:mm")
+                                </p>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-calendar-check me-2"></i>Kết thúc: @Model.Event.EndDate.ToString("dd/MM/yyyy HH:mm")
+                                </p>
+                                @if (Model.Event.RegistrationDeadline.HasValue)
+                                {
+                                    <p class="text-muted">
+                                        <i class="fas fa-clock me-2"></i>Hạn đăng ký: @Model.Event.RegistrationDeadline.Value.ToString("dd/MM/yyyy HH:mm")
+                                    </p>
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="text-white mb-3">Địa điểm</h5>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-map-marker-alt me-2"></i>@Model.Event.Location
+                                </p>
+                                @if (!string.IsNullOrEmpty(Model.Event.Address))
+                                {
+                                    <p class="text-muted">
+                                        <i class="fas fa-info-circle me-2"></i>@Model.Event.Address
+                                    </p>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="text-white mb-3">Thông tin khác</h5>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-tag me-2"></i>Loại sự kiện: @Model.Event.EventTypeName
+                                </p>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-user-shield me-2"></i>Quyền riêng tư: @Model.Event.PrivacyLevel
+                                </p>
+                                @if (Model.Event.MaxAttendees.HasValue)
+                                {
+                                    <p class="text-muted">
+                                        <i class="fas fa-users me-2"></i>Số lượng tối đa: @Model.Event.MaxAttendees người
+                                    </p>
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="text-white mb-3">Giá vé</h5>
+                                @if (Model.Event.Price.HasValue && Model.Event.Price > 0)
+                                {
+                                    <p class="text-muted">
+                                        <i class="fas fa-ticket-alt me-2"></i>@Model.Event.Price.Value.ToString("N0") @Model.Event.Currency
+                                    </p>
+                                }
+                                else
+                                {
+                                    <p class="text-muted">
+                                        <i class="fas fa-ticket-alt me-2"></i>Miễn phí
+                                    </p>
+                                }
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.Event.Tags))
+                        {
+                            <div class="mt-4">
+                                <h5 class="text-white mb-3">Tags</h5>
+                                <div>
+                                    @foreach (var tag in Model.Event.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                    {
+                                        <span class="badge bg-secondary me-2 mb-2">@tag.Trim()</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Organizer Info -->
+                <div class="card bg-dark border-gold mb-4">
+                    <div class="card-body">
+                        <h4 class="text-gold mb-4">Thông tin người tổ chức</h4>
+                        <div class="d-flex align-items-center">
+                            @if (!string.IsNullOrEmpty(Model.Event.Organizer.ProfileImageUrl))
+                            {
+                                <img src="@Model.Event.Organizer.ProfileImageUrl" class="rounded-circle me-3" style="width: 64px; height: 64px; object-fit: cover;" alt="@Model.Event.Organizer.FullName">
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-3" style="width: 64px; height: 64px;">
+                                    <i class="fas fa-user fa-2x text-white"></i>
+                                </div>
+                            }
+                            <div>
+                                <h5 class="text-white mb-1">@Model.Event.Organizer.FullName</h5>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-envelope me-2"></i>@Model.Event.Organizer.Email
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Registration Stats -->
+                <div class="card bg-dark border-gold mb-4">
+                    <div class="card-body">
+                        <h4 class="text-gold mb-4">Thống kê đăng ký</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Số người đăng ký:</span>
+                            <span class="text-white">@Model.Event.Registrations.Count()</span>
+                        </div>
+                        @if (Model.Event.MaxAttendees.HasValue)
+                        {
+                            <div class="progress bg-secondary mb-2">
+                                <div class="progress-bar bg-gold" role="progressbar" 
+                                     style="width: @(Model.Event.Registrations.Count() * 100 / Model.Event.MaxAttendees.Value)%">
+                                </div>
+                            </div>
+                            <small class="text-muted">@Model.Event.Registrations.Count() / @Model.Event.MaxAttendees chỗ</small>
+                        }
+                    </div>
+                </div>
+
+                <!-- Rating Stats -->
+                @if (Model.Event.Feedbacks.Any())
+                {
+                    <div class="card bg-dark border-gold mb-4">
+                        <div class="card-body">
+                            <h4 class="text-gold mb-4">Đánh giá</h4>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h2 class="text-white mb-0">@Model.Event.AverageRating?.ToString("N1")</h2>
+                                    <small class="text-muted">trên 5 sao</small>
+                                </div>
+                                <div class="text-end">
+                                    <p class="text-white mb-0">@Model.Event.TotalFeedbacks</p>
+                                    <small class="text-muted">đánh giá</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Share Buttons -->
+                <div class="card bg-dark border-gold mb-4">
+                    <div class="card-body">
+                        <h5 class="text-gold mb-4">
+                            <i class="fas fa-share-alt me-2"></i>Chia sẻ sự kiện
+                        </h5>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-primary flex-grow-1 me-2" onclick="shareOnFacebook()">
+                                <i class="fab fa-facebook-f me-2"></i>Facebook
+                            </button>
+                            <button type="button" class="btn btn-outline-info flex-grow-1 me-2" onclick="shareOnTwitter()">
+                                <i class="fab fa-twitter me-2"></i>Twitter
+                            </button>
+                            <button type="button" class="btn btn-outline-success flex-grow-1 me-2" onclick="shareOnWhatsApp()">
+                                <i class="fab fa-whatsapp me-2"></i>WhatsApp
+                            </button>
+                            <button type="button" class="btn btn-outline-light flex-grow-1" onclick="copyLink()">
+                                <i class="fas fa-link me-2"></i>Copy Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-times fa-4x text-muted mb-4"></i>
+            <h3 class="text-muted">Không tìm thấy sự kiện</h3>
+            <p class="text-muted mb-4">Sự kiện này không tồn tại hoặc đã bị xóa.</p>
+            <a href="/Events" class="btn btn-outline-gold">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+            </a>
+        </div>
+    }
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (Model.IsOrganizer)
+{
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark border-danger">
+                <div class="modal-header border-danger">
+                    <h5 class="modal-title text-danger">Xác nhận xóa</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-white">Bạn có chắc chắn muốn xóa sự kiện này?</p>
+                    <p class="text-muted">Hành động này không thể hoàn tác.</p>
+                </div>
+                <div class="modal-footer border-danger">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Event?.EventId" class="d-inline">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt me-2"></i>Xóa
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Share functions
+        function shareOnFacebook() {
+            const url = encodeURIComponent(window.location.href);
+            const title = encodeURIComponent('@Model.Event.EventName');
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${title}`, '_blank');
+            logShare('Facebook');
+        }
+
+        function shareOnTwitter() {
+            const url = encodeURIComponent(window.location.href);
+            const text = encodeURIComponent('@Model.Event.EventName - @Model.Event.StartDate.ToString("dd/MM/yyyy HH:mm") tại @Model.Event.Location');
+            window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+            logShare('Twitter');
+        }
+
+        function shareOnWhatsApp() {
+            const url = encodeURIComponent(window.location.href);
+            const text = encodeURIComponent('@Model.Event.EventName - @Model.Event.StartDate.ToString("dd/MM/yyyy HH:mm") tại @Model.Event.Location');
+            window.open(`https://wa.me/?text=${text}%0A${url}`, '_blank');
+            logShare('WhatsApp');
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('Đã sao chép link sự kiện!');
+                logShare('CopyLink');
+            });
+        }
+
+        function logShare(platform) {
+            fetch('?handler=LogShare', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: `platform=${platform}`
+            });
+        }
+    </script>
+} 

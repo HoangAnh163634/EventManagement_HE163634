@@ -4,6 +4,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using EventManagement.Models;
 using EventManagement.Services;
+using EventManagement.Hubs;
+using Hangfire;
+using Hangfire.SqlServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,10 +44,24 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Add custom services
+// Register services
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<RegistrationService>();
+builder.Services.AddScoped<NotificationService>();
+
+// Add SignalR
+builder.Services.AddSignalR();
+
+// Add Hangfire
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHangfireServer();
 
 // Add logging
 builder.Services.AddLogging();
@@ -78,7 +95,22 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Add SignalR endpoint
+app.MapHub<NotificationHub>("/notificationHub");
+
+// Add Hangfire dashboard
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireAuthorizationFilter() }
+});
+
 app.MapRazorPages();
+
+// Schedule recurring jobs
+RecurringJob.AddOrUpdate<EventService>(
+    "check-event-reminders",
+    x => x.SendEventRemindersAsync(),
+    Cron.Daily(9, 0)); // Run at 9:00 AM every day
 
 app.Run();
 

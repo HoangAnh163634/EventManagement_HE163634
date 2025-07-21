@@ -1,0 +1,244 @@
+@page "{id:int}"
+@model EventManagement.Pages.Events.CheckInModel
+@{
+    ViewData["Title"] = "Check-in sự kiện";
+}
+
+<div class="container py-5">
+    @if (Model.Event != null)
+    {
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Event Info -->
+                <div class="card bg-dark border-gold mb-4">
+                    <div class="card-header bg-gold text-dark">
+                        <h4 class="mb-0">
+                            <i class="fas fa-qrcode me-2"></i>Check-in sự kiện
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h5 class="text-gold">@Model.Event.EventName</h5>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-calendar me-2"></i>@Model.Event.StartDate.ToString("dd/MM/yyyy HH:mm")
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-map-marker-alt me-2"></i>@Model.Event.Location
+                            </p>
+                        </div>
+
+                        <!-- QR Scanner -->
+                        <div class="mb-4">
+                            <div class="ratio ratio-16x9">
+                                <video id="qrScanner" class="rounded"></video>
+                            </div>
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-gold" id="startScan">
+                                    <i class="fas fa-camera me-2"></i>Bắt đầu quét
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="stopScan" style="display: none;">
+                                    <i class="fas fa-stop me-2"></i>Dừng quét
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Manual Check-in -->
+                        <div class="mb-4">
+                            <h6 class="text-gold mb-3">Check-in thủ công</h6>
+                            <form method="post" asp-page-handler="Manual" class="row g-3">
+                                <div class="col-md-8">
+                                    <input type="text" name="qrCode" class="form-control bg-dark text-white border-secondary" 
+                                           placeholder="Nhập mã QR code">
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="submit" class="btn btn-gold w-100">
+                                        <i class="fas fa-check me-2"></i>Check-in
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Recent Check-ins -->
+                        <div>
+                            <h6 class="text-gold mb-3">Check-in gần đây</h6>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Thời gian</th>
+                                            <th>Người tham gia</th>
+                                            <th>Phương thức</th>
+                                            <th>Người check-in</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var registration in Model.RecentCheckIns)
+                                        {
+                                            <tr>
+                                                <td>@registration.CheckInTime?.ToString("HH:mm")</td>
+                                                <td>@registration.Attendee.FullName</td>
+                                                <td>@registration.CheckInMethod</td>
+                                                <td>@registration.CheckInByNavigation?.FullName</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Stats Card -->
+                <div class="card bg-dark border-gold mb-4">
+                    <div class="card-body">
+                        <h5 class="text-gold mb-4">Thống kê check-in</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Tổng số đăng ký:</span>
+                            <span class="text-white">@Model.Event.Registrations.Count()</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Đã check-in:</span>
+                            <span class="text-white">@Model.Event.Registrations.Count(r => r.Status == "CheckedIn")</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Chưa check-in:</span>
+                            <span class="text-white">@Model.Event.Registrations.Count(r => r.Status == "Registered")</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Đã hủy:</span>
+                            <span class="text-white">@Model.Event.Registrations.Count(r => r.Status == "Cancelled")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Card -->
+                <div class="card bg-dark border-gold">
+                    <div class="card-body">
+                        <h5 class="text-gold mb-4">Tìm kiếm người tham gia</h5>
+                        <form method="get">
+                            <div class="mb-3">
+                                <input type="text" name="search" class="form-control bg-dark text-white border-secondary" 
+                                       placeholder="Tìm theo tên hoặc email" value="@Model.Search">
+                            </div>
+                            <button type="submit" class="btn btn-gold w-100">
+                                <i class="fas fa-search me-2"></i>Tìm kiếm
+                            </button>
+                        </form>
+
+                        @if (!string.IsNullOrEmpty(Model.Search))
+                        {
+                            <hr class="border-secondary">
+                            <div class="list-group list-group-flush">
+                                @foreach (var registration in Model.SearchResults)
+                                {
+                                    <div class="list-group-item bg-dark border-secondary">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1 text-white">@registration.Attendee.FullName</h6>
+                                                <small class="text-muted">@registration.Attendee.Email</small>
+                                            </div>
+                                            @if (registration.Status == "Registered")
+                                            {
+                                                <form method="post" asp-page-handler="Manual">
+                                                    <input type="hidden" name="qrCode" value="@registration.Qrcode?.QrcodeValue">
+                                                    <button type="submit" class="btn btn-sm btn-outline-gold">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-@Model.GetStatusClass(registration.Status)">@registration.Status</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-times fa-4x text-muted mb-4"></i>
+            <h3 class="text-muted">Không tìm thấy sự kiện</h3>
+            <p class="text-muted mb-4">Sự kiện này không tồn tại hoặc đã bị xóa.</p>
+            <a href="/Events" class="btn btn-outline-gold">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+            </a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/html5-qrcode/html5-qrcode.min.js"></script>
+    <script>
+        let html5QrcodeScanner = null;
+
+        document.getElementById('startScan').addEventListener('click', function() {
+            this.style.display = 'none';
+            document.getElementById('stopScan').style.display = 'inline-block';
+
+            html5QrcodeScanner = new Html5Qrcode("qrScanner");
+            html5QrcodeScanner.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                onScanSuccess,
+                onScanFailure
+            );
+        });
+
+        document.getElementById('stopScan').addEventListener('click', function() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    this.style.display = 'none';
+                    document.getElementById('startScan').style.display = 'inline-block';
+                });
+            }
+        });
+
+        function onScanSuccess(qrCode) {
+            // Stop scanning
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    document.getElementById('stopScan').style.display = 'none';
+                    document.getElementById('startScan').style.display = 'inline-block';
+                });
+            }
+
+            // Submit QR code
+            fetch('?handler=Manual', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: 'qrCode=' + encodeURIComponent(qrCode)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi check-in. Vui lòng thử lại.');
+            });
+        }
+
+        function onScanFailure(error) {
+            // Handle scan failure, usually better to just ignore it
+        }
+    </script>
+} 

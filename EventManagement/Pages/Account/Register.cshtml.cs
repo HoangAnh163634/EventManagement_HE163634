@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using EventManagement.Models.ViewModels;
 using EventManagement.Services;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.Logging;
 
 namespace EventManagement.Pages.Account;
 
@@ -10,11 +11,13 @@ public class RegisterModel : PageModel
 {
     private readonly AuthService _authService;
     private readonly EmailService _emailService;
+    private readonly ILogger<RegisterModel> _logger;
 
-    public RegisterModel(AuthService authService, EmailService emailService)
+    public RegisterModel(AuthService authService, EmailService emailService, ILogger<RegisterModel> logger)
     {
         _authService = authService;
         _emailService = emailService;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -93,8 +96,8 @@ public class RegisterModel : PageModel
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error occurred during user registration");
             ModelState.AddModelError(string.Empty, "An error occurred while creating your account. Please try again.");
-            // Log the exception in a real application
             return Page();
         }
     }
