@@ -88,7 +88,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Add session middleware
+// Add session middleware BEFORE authentication
 app.UseSession();
 
 // Add authentication & authorization middleware
