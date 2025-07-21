@@ -10,7 +10,14 @@
     <div class="container text-center py-5" style="position: relative; z-index: 2;">
         <h1 class="display-4 fw-bold mb-3 hero-text">Plan Your Perfect Event</h1>
         <p class="lead mb-4">Create, manage, and elevate your events with elegance.</p>
-        <a href="/Events/Create" class="btn btn-custom-gold btn-lg mx-2">Create Event</a>
+        @if (HttpContext.Session.GetString("UserEmailVerified") == "true")
+        {
+            <a href="/Events/Create" class="btn btn-custom-gold btn-lg mx-2">Create Event</a>
+        }
+        else if (HttpContext.Session.GetInt32("UserId") != null)
+        {
+            <a class="btn btn-custom-gold btn-lg mx-2 disabled" tabindex="-1" aria-disabled="true" title="Bạn cần xác thực email để tạo sự kiện">Create Event (Xác thực email)</a>
+        }
         <a href="#events" class="btn btn-outline-light btn-lg mx-2">Explore Events</a>
     </div>
     <div class="parallax-overlay"></div>
@@ -32,15 +39,37 @@
                                 <h5 class="card-title">@evt.EventName</h5>
                                 <p class="card-text">
                                     <i class="fas fa-calendar-alt me-2 text-gold"></i>
-                                    <span class="event-date">@evt.StartDate.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                    <span class="event-date">@evt.StartDate.ToString("MMM dd, yyyy HH:mm")</span>
                                 </p>
                                 <p class="card-text">
                                     <i class="fas fa-map-marker-alt me-2 text-gold"></i>@evt.Location
                                 </p>
+                                <p class="card-text">
+                                    <i class="fas fa-user me-2 text-gold"></i>by @evt.Organizer.FullName
+                                </p>
+                                @if (evt.Price.HasValue && evt.Price > 0)
+                                {
+                                    <p class="card-text">
+                                        <i class="fas fa-tag me-2 text-gold"></i>@evt.Price.Value.ToString("C") @evt.Currency
+                                    </p>
+                                }
+                                else
+                                {
+                                    <p class="card-text">
+                                        <i class="fas fa-gift me-2 text-gold"></i>Free Event
+                                    </p>
+                                }
                             </div>
                             <div class="card-footer text-center bg-dark">
                                 <a href="/Events/Details/@evt.EventId" class="btn btn-outline-gold">Details</a>
-                                <a href="/Registrations/Create?eventId=@evt.EventId" class="btn btn-gold">Register</a>
+                                @if (HttpContext.Session.GetString("UserEmailVerified") == "true")
+                                {
+                                    <a href="/Registrations/Create?eventId=@evt.EventId" class="btn btn-gold">Register</a>
+                                }
+                                else if (HttpContext.Session.GetInt32("UserId") != null)
+                                {
+                                    <a class="btn btn-gold disabled" tabindex="-1" aria-disabled="true" title="Bạn cần xác thực email để đăng ký">Register (Xác thực email)</a>
+                                }
                             </div>
                         </div>
                     </div>
@@ -48,7 +77,16 @@
             }
             else
             {
-                <p class="text-center text-white">No latest events available.</p>
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                        <h4 class="text-white mb-3">No Events Available</h4>
+                        <p class="text-muted mb-4">There are no upcoming events at the moment.</p>
+                        <a href="/Events/Create" class="btn btn-custom-gold">
+                            <i class="fas fa-plus-circle me-2"></i>Create First Event
+                        </a>
+                    </div>
+                </div>
             }
         </div>
     </div>

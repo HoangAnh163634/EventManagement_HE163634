@@ -17,6 +17,59 @@ body {
     min-height: 100vh;
     background-color: #0F0F0F;
     color: #FFFFFF;
+    padding-top: 70px; /* Add padding to prevent header overlap */
+}
+
+/* Fix for success messages being hidden behind fixed header */
+.alert {
+    margin-top: 10px;
+    z-index: 1030;
+    position: relative;
+}
+
+/* Ensure dropdown works properly */
+.navbar-nav .dropdown-menu {
+    background-color: #1A1A1A !important;
+    border: 1px solid #2F2F2F;
+    box-shadow: 0 4px 15px rgba(224, 198, 143, 0.2);
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1060;
+    min-width: 200px;
+}
+
+.navbar-nav .dropdown-menu.show {
+    display: block !important;
+}
+
+/* Alternative: CSS-only dropdown */
+.navbar-nav .dropdown:hover .dropdown-menu {
+    display: block !important;
+}
+
+.navbar-nav .dropdown-toggle:focus + .dropdown-menu {
+    display: block !important;
+}
+
+.navbar-nav .dropdown-menu .dropdown-item {
+    color: #FFFFFF !important;
+    transition: all 0.3s;
+}
+
+.navbar-nav .dropdown-menu .dropdown-item:hover {
+    background-color: #2F2F2F !important;
+    color: #E0C68F !important;
+}
+
+.navbar-nav .dropdown-menu .dropdown-item.text-gold {
+    color: #E0C68F !important;
+}
+
+.navbar-nav .dropdown-menu .dropdown-item.text-gold:hover {
+    background-color: #E0C68F !important;
+    color: #0F0F0F !important;
 }
 
 .hero {
@@ -170,6 +223,122 @@ main {
 
 .shadow-lg {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Enhanced form validation styles */
+.form-control.is-valid {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.form-check-input.is-valid {
+    border-color: #28a745 !important;
+}
+
+.form-check-input.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.text-danger {
+    color: #ff6b6b !important;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.validation-summary-errors {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 0.375rem;
+    color: #721c24;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.validation-summary-errors ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+/* Password strength indicator */
+.password-strength {
+    margin-top: 0.5rem;
+}
+
+.password-strength .strength-bar {
+    height: 4px;
+    background-color: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.password-strength .strength-bar .strength-fill {
+    height: 100%;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-weak { background-color: #dc3545; }
+.strength-fair { background-color: #ffc107; }
+.strength-good { background-color: #28a745; }
+.strength-strong { background-color: #20c997; }
+
+/* Disabled button styles */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+}
+
+/* Field validation error styles */
+.field-validation-error {
+    display: block;
+    font-size: 0.875rem;
+    color: #dc3545;
+    margin-top: 0.25rem;
+}
+
+/* Gold button styles */
+.btn-gold {
+    background-color: #d4af37;
+    border-color: #d4af37;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.btn-gold:hover {
+    background-color: #f4e4bc;
+    border-color: #f4e4bc;
+    color: #1a1a1a;
+}
+
+.btn-gold:focus, .btn-gold:active {
+    background-color: #b8941f;
+    border-color: #b8941f;
+    color: #1a1a1a;
+    box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
+}
+
+/* Gold text and border utilities */
+.text-gold {
+    color: #d4af37 !important;
+}
+
+.border-gold {
+    border-color: #d4af37 !important;
+}
+
+.bg-gold {
+    background-color: #d4af37 !important;
 }
 
 

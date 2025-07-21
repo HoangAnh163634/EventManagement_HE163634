@@ -17,11 +17,33 @@ public partial class EventStatusView
 
     public bool IsPublic { get; set; }
 
+    public string PrivacyLevel { get; set; } = null!;
+
     public int? MaxAttendees { get; set; }
 
-    public string Status { get; set; } = null!;
+    public decimal? Price { get; set; }
+
+    public string? Currency { get; set; }
+
+    public string ComputedStatus { get; set; } = null!;
+
+    public string SetStatus { get; set; } = null!;
 
     public int OrganizerId { get; set; }
 
     public int EventTypeId { get; set; }
+
+    public string EventTypeName { get; set; } = null!;
+
+    public string OrganizerName { get; set; } = null!;
+
+    public decimal? AverageRating { get; set; }
+
+    public int TotalFeedbacks { get; set; }
+
+    public int? TotalRegistrations { get; set; }
+
+    public int? TotalCheckedIn { get; set; }
+
+    public double? CheckInRate { get; set; }
 }

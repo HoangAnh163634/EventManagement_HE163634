@@ -1,32 +1,31 @@
-
-using EventManagement.Models;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using EventManagement.Models;
 
-namespace EventManagement.Pages
+
+namespace EventManagement.Pages;
+
+public class IndexModel : PageModel
 {
-    public class IndexModel : PageModel
+    private readonly EventManagementDbContext _context;
+
+    public IndexModel(EventManagementDbContext context)
     {
-        private readonly EventManagementContext _context;
+        _context = context;
+    }
 
-        public IndexModel(EventManagementContext context)
-        {
-            _context = context;
-        }
+    public IList<Event> Events { get; set; } = new List<Event>();
 
-        public IList<Event> Events { get; set; }
-
-        public async Task OnGetAsync()
-        {
-            Events = await _context.Events
-                .Include(e => e.EventType)
-                .Where(e => e.IsPublic && (e.Status == "Upcoming" || e.Status == "Ongoing"))
-                .OrderByDescending(e => e.CreatedAt) // Latest 3 events
-                .Take(3)
-                .ToListAsync();
-        }
+    public async Task OnGetAsync()
+    {
+        Events = await _context.Events
+            .Include(e => e.EventType)
+            .Include(e => e.Organizer)
+            .Where(e => e.IsPublic && !e.IsDeleted && 
+                       (e.Status == "Upcoming" || e.Status == "Ongoing") &&
+                       e.StartDate > DateTime.Now)
+            .OrderByDescending(e => e.CreatedAt)
+            .Take(3)
+            .ToListAsync();
     }
 }

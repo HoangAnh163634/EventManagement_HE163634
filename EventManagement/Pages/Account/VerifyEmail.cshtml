@@ -1,0 +1,28 @@
+@page
+@model EventManagement.Pages.Account.VerifyEmailModel
+@{
+    ViewData["Title"] = "Xác thực email";
+}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card bg-dark border-gold">
+                <div class="card-header bg-gold text-dark">
+                    <h4 class="mb-0">Xác thực email</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.Success)
+                    {
+                        <div class="alert alert-success">🎉 Email của bạn đã được xác thực thành công!</div>
+                        <a href="/Account/Login" class="btn btn-gold">Đăng nhập</a>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger">❌ Xác thực thất bại hoặc token không hợp lệ.</div>
+                        <a href="/Account/Login" class="btn btn-gold">Về trang đăng nhập</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

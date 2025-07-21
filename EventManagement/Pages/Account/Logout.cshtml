@@ -1,0 +1,30 @@
+@page
+@model EventManagement.Pages.Account.LogoutModel
+@{
+    ViewData["Title"] = "Logout";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card bg-gray-dark shadow-lg">
+                <div class="card-body p-4 text-center">
+                    <i class="fas fa-sign-out-alt fa-3x text-gold mb-3"></i>
+                    <h3 class="text-white mb-3">Logging Out...</h3>
+                    <p class="text-muted">Please wait while we log you out securely.</p>
+                    
+                    <div class="spinner-border text-gold mt-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-redirect after logout
+    setTimeout(function() {
+        window.location.href = '/';
+    }, 2000);
+</script> 
