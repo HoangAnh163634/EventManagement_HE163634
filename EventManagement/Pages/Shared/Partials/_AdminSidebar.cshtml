@@ -1,0 +1,52 @@
+@* Sidebar dành cho admin *@
+@if (Context.Session.GetString("UserRole") == "Admin")
+{
+    <aside class="admin-sidebar bg-dark border-end border-gold p-3 vh-100 position-fixed" style="width: 240px; top: 56px; left: 0; z-index: 1030;">
+        <h5 class="text-gold mb-4"><i class="fas fa-cogs me-2"></i>Quản trị</h5>
+        <ul class="nav flex-column">
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="/Admin/Dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="/Admin/Users"><i class="fas fa-users me-2"></i>Quản lý người dùng</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="/Admin/Events"><i class="fas fa-calendar-alt me-2"></i>Quản lý sự kiện</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="/Admin/Registrations"><i class="fas fa-ticket-alt me-2"></i>Quản lý đăng ký</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="/Admin/Feedbacks"><i class="fas fa-star me-2"></i>Quản lý đánh giá</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="/Admin/Notifications"><i class="fas fa-bell me-2"></i>Quản lý thông báo</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="/Admin/QRCodes"><i class="fas fa-qrcode me-2"></i>Quản lý QR Code</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="/Admin/CalendarSyncs"><i class="fas fa-calendar-check me-2"></i>Đồng bộ lịch</a>
+            </li>
+        </ul>
+    </aside>
+}
+<style>
+    .admin-sidebar {
+        min-width: 220px;
+        max-width: 260px;
+        height: 100vh;
+        overflow-y: auto;
+        background: #181818;
+        border-right: 2px solid #ffd700;
+    }
+    .admin-sidebar .nav-link {
+        color: #fff;
+        transition: background 0.2s, color 0.2s;
+        border-radius: 4px;
+    }
+    .admin-sidebar .nav-link.active, .admin-sidebar .nav-link:hover {
+        background: #ffd700;
+        color: #181818;
+    }
+</style> 

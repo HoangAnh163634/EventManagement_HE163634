@@ -1,9 +1,10 @@
 @page
 @model EventManagement.Pages.Admin.DashboardModel
 @{
-    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
 }
-<div class="container py-5">
+<partial name="~/Pages/Shared/Partials/_AdminSidebar.cshtml" />
+<div style="margin-left:240px;">
     <h2 class="mb-4">Admin Dashboard</h2>
     <div class="row mb-4">
         <div class="col-md-3">
@@ -166,10 +167,10 @@
         new Chart(document.getElementById('userGrowthChart').getContext('2d'), {
             type: 'line',
             data: {
-                labels: @Json.Serialize(Model.Dashboard.UserGrowth.Select(x => x.Date.ToString("dd/MM"))),
+                labels: @Json.Serialize(Model.UserGrowthLabels),
                 datasets: [{
                     label: 'Người dùng mới',
-                    data: @Json.Serialize(Model.Dashboard.UserGrowth.Select(x => x.Value)),
+                    data: @Json.Serialize(Model.UserGrowthValues),
                     borderColor: '#ffd700',
                     backgroundColor: 'rgba(255, 215, 0, 0.1)',
                     borderWidth: 2,
@@ -217,10 +218,10 @@
         new Chart(document.getElementById('eventGrowthChart').getContext('2d'), {
             type: 'line',
             data: {
-                labels: @Json.Serialize(Model.Dashboard.EventGrowth.Select(x => x.Date.ToString("MM/dd"))),
+                labels: @Json.Serialize(Model.EventGrowthLabels),
                 datasets: [{
                     label: 'Event Growth',
-                    data: @Json.Serialize(Model.Dashboard.EventGrowth.Select(x => x.Value)),
+                    data: @Json.Serialize(Model.EventGrowthValues),
                     borderColor: '#28a745',
                     backgroundColor: 'rgba(40,167,69,0.2)',
                     tension: 0.1
@@ -232,10 +233,10 @@
         new Chart(document.getElementById('registrationGrowthChart').getContext('2d'), {
             type: 'line',
             data: {
-                labels: @Json.Serialize(Model.Dashboard.RegistrationGrowth.Select(x => x.Date.ToString("MM/dd"))),
+                labels: @Json.Serialize(Model.RegistrationGrowthLabels),
                 datasets: [{
                     label: 'Registration Growth',
-                    data: @Json.Serialize(Model.Dashboard.RegistrationGrowth.Select(x => x.Value)),
+                    data: @Json.Serialize(Model.RegistrationGrowthValues),
                     borderColor: '#17a2b8',
                     backgroundColor: 'rgba(23,162,184,0.2)',
                     tension: 0.1
@@ -311,10 +312,10 @@
         new Chart(document.getElementById('topEventsBar').getContext('2d'), {
             type: 'bar',
             data: {
-                labels: @Json.Serialize(Model.Dashboard.TopEvents.Select(x => x.EventName)),
+                labels: @Json.Serialize(Model.TopEventsLabels),
                 datasets: [{
                     label: 'Registrations',
-                    data: @Json.Serialize(Model.Dashboard.TopEvents.Select(x => x.RegistrationCount)),
+                    data: @Json.Serialize(Model.TopEventsValues),
                     backgroundColor: '#fd7e14'
                 }]
             },

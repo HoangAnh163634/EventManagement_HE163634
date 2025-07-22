@@ -50,6 +50,7 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<RegistrationService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<AdminService>();
 
 // Add SignalR
 builder.Services.AddSignalR();

@@ -81,7 +81,10 @@ public class LoginModel : PageModel
         {
             return Redirect(Input.ReturnUrl);
         }
-        
+        if (primaryRole == "Admin")
+        {
+            return RedirectToPage("/Admin/Dashboard");
+        }
         return RedirectToPage("/Index");
     }
 } 

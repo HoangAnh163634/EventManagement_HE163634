@@ -1,297 +1,303 @@
 @page "{id:int}"
 @model EventManagement.Pages.Admin.QRCodeDetailsModel
 @{
-    ViewData["Title"] = "Chi tiết QR Code";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
 }
+<partial name="~/Pages/Shared/Partials/_AdminSidebar.cshtml" />
+<div style="margin-left:240px;">
+    @{
+        ViewData["Title"] = "Chi tiết QR Code";
+    }
 
-<div class="container py-5">
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card bg-dark text-white">
-                <div class="card-header bg-gold text-dark d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">
-                        <i class="fas fa-qrcode me-2"></i>Chi tiết QR Code
-                    </h4>
-                    <a href="/Admin/QRCodes" class="btn btn-dark">
-                        <i class="fas fa-arrow-left me-2"></i>Quay lại
-                    </a>
-                </div>
-                <div class="card-body">
-                    @if (Model.QRCode != null)
-                    {
-                        <div class="row mb-4">
-                            <div class="col-md-12">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <div>
-                                        <h3>@Model.QRCode.Event.EventName</h3>
-                                        <div class="text-muted">
-                                            <i class="fas fa-calendar me-2"></i>@Model.QRCode.Event.StartDate.ToString("dd/MM/yyyy HH:mm") - @Model.QRCode.Event.EndDate.ToString("dd/MM/yyyy HH:mm")
-                                        </div>
-                                        <div class="text-muted">
-                                            <i class="fas fa-map-marker-alt me-2"></i>@Model.QRCode.Event.Location
-                                        </div>
-                                    </div>
-                                    <div class="text-end">
-                                        <div class="mb-2">
-                                            @if (Model.QRCode.IsActive)
-                                            {
-                                                <span class="badge bg-success">Còn hiệu lực</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-danger">Hết hiệu lực</span>
-                                            }
-                                        </div>
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card bg-dark text-white">
+                    <div class="card-header bg-gold text-dark d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-qrcode me-2"></i>Chi tiết QR Code
+                        </h4>
+                        <a href="/Admin/QRCodes" class="btn btn-dark">
+                            <i class="fas fa-arrow-left me-2"></i>Quay lại
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.QRCode != null)
+                        {
+                            <div class="row mb-4">
+                                <div class="col-md-12">
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
                                         <div>
-                                            @switch (Model.QRCode.Registration.Status)
-                                            {
-                                                case "Pending":
-                                                    <span class="badge bg-warning">Chờ duyệt</span>
-                                                    break;
-                                                case "Confirmed":
-                                                    <span class="badge bg-success">Đã duyệt</span>
-                                                    break;
-                                                case "Cancelled":
-                                                    <span class="badge bg-danger">Đã hủy</span>
-                                                    break;
-                                                case "CheckedIn":
-                                                    <span class="badge bg-info">Đã check-in</span>
-                                                    break;
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row g-3 mb-4">
-                                    <div class="col-md-6">
-                                        <div class="card bg-dark border-secondary h-100">
-                                            <div class="card-body">
-                                                <h6 class="card-title">
-                                                    <i class="fas fa-user me-2"></i>Thông tin người đăng ký
-                                                </h6>
-                                                <div>
-                                                    <a href="/Admin/UserDetails/@Model.QRCode.Registration.AttendeeId" class="text-gold">
-                                                        @Model.QRCode.Registration.Attendee.FullName
-                                                    </a>
-                                                </div>
-                                                <div class="text-muted">@Model.QRCode.Registration.Attendee.Email</div>
-                                                <div class="text-muted">@Model.QRCode.Registration.Attendee.PhoneNumber</div>
+                                            <h3>@Model.QRCode.Event.EventName</h3>
+                                            <div class="text-muted">
+                                                <i class="fas fa-calendar me-2"></i>@Model.QRCode.Event.StartDate.ToString("dd/MM/yyyy HH:mm") - @Model.QRCode.Event.EndDate.ToString("dd/MM/yyyy HH:mm")
+                                            </div>
+                                            <div class="text-muted">
+                                                <i class="fas fa-map-marker-alt me-2"></i>@Model.QRCode.Event.Location
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="card bg-dark border-secondary h-100">
-                                            <div class="card-body">
-                                                <h6 class="card-title">
-                                                    <i class="fas fa-clock me-2"></i>Thời gian
-                                                </h6>
-                                                <div class="mb-2">
-                                                    <strong>Tạo lúc:</strong>
-                                                    @Model.QRCode.GeneratedAt.ToString("dd/MM/yyyy HH:mm")
-                                                </div>
-                                                @if (Model.QRCode.ExpiresAt.HasValue)
+                                        <div class="text-end">
+                                            <div class="mb-2">
+                                                @if (Model.QRCode.IsActive)
                                                 {
-                                                    <div class="mb-2">
-                                                        <strong>Hết hạn lúc:</strong>
-                                                        @Model.QRCode.ExpiresAt.Value.ToString("dd/MM/yyyy HH:mm")
-                                                    </div>
-                                                }
-                                                @if (Model.QRCode.UsedAt.HasValue)
-                                                {
-                                                    <div>
-                                                        <strong>Sử dụng lúc:</strong>
-                                                        @Model.QRCode.UsedAt.Value.ToString("dd/MM/yyyy HH:mm")
-                                                    </div>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row g-3 mb-4">
-                                    <div class="col-md-6">
-                                        <div class="card bg-dark border-secondary h-100">
-                                            <div class="card-body">
-                                                <h6 class="card-title">
-                                                    <i class="fas fa-qrcode me-2"></i>QR Code
-                                                </h6>
-                                                <div class="text-center">
-                                                    <img src="@Model.QRCode.QrcodeImageUrl" class="img-fluid" alt="QR Code">
-                                                </div>
-                                                <div class="text-muted text-center mt-2">
-                                                    <small>@Model.QRCode.QrcodeValue</small>
-                                                </div>
-                                                <div class="text-muted text-center">
-                                                    <small>Số lần quét: @Model.QRCode.ScanCount</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="card bg-dark border-secondary h-100">
-                                            <div class="card-body">
-                                                <h6 class="card-title">
-                                                    <i class="fas fa-sign-in-alt me-2"></i>Thông tin check-in
-                                                </h6>
-                                                @if (Model.QRCode.Registration.CheckInTime.HasValue)
-                                                {
-                                                    <div class="mb-2">
-                                                        <strong>Thời gian:</strong>
-                                                        @Model.QRCode.Registration.CheckInTime.Value.ToString("dd/MM/yyyy HH:mm")
-                                                    </div>
-                                                    <div class="mb-2">
-                                                        <strong>Phương thức:</strong>
-                                                        @Model.QRCode.Registration.CheckInMethod
-                                                    </div>
-                                                    <div class="mb-2">
-                                                        <strong>Địa điểm:</strong>
-                                                        @Model.QRCode.Registration.CheckInLocation
-                                                    </div>
-                                                    <div>
-                                                        <strong>Người xác nhận:</strong>
-                                                        <a href="/Admin/UserDetails/@Model.QRCode.Registration.CheckInBy" class="text-gold">
-                                                            @Model.QRCode.Registration.CheckInByNavigation?.FullName
-                                                        </a>
-                                                    </div>
+                                                    <span class="badge bg-success">Còn hiệu lực</span>
                                                 }
                                                 else
                                                 {
-                                                    <div class="text-muted">Chưa check-in</div>
+                                                    <span class="badge bg-danger">Hết hiệu lực</span>
+                                                }
+                                            </div>
+                                            <div>
+                                                @switch (Model.QRCode.Registration.Status)
+                                                {
+                                                    case "Pending":
+                                                        <span class="badge bg-warning">Chờ duyệt</span>
+                                                        break;
+                                                    case "Confirmed":
+                                                        <span class="badge bg-success">Đã duyệt</span>
+                                                        break;
+                                                    case "Cancelled":
+                                                        <span class="badge bg-danger">Đã hủy</span>
+                                                        break;
+                                                    case "CheckedIn":
+                                                        <span class="badge bg-info">Đã check-in</span>
+                                                        break;
                                                 }
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div class="d-flex gap-2">
-                                    @if (Model.QRCode.IsActive && !Model.QRCode.UsedAt.HasValue)
-                                    {
-                                        <button type="button" class="btn btn-info"
-                                                onclick="scanQRCode('@Model.QRCode.QrcodeValue')">
-                                            <i class="fas fa-camera me-2"></i>Quét QR Code
-                                        </button>
-                                        <button type="button" class="btn btn-danger"
-                                                onclick="deactivateQRCode(@Model.QRCode.QrcodeId)">
-                                            <i class="fas fa-ban me-2"></i>Vô hiệu hóa
-                                        </button>
-                                    }
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-6">
+                                            <div class="card bg-dark border-secondary h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-user me-2"></i>Thông tin người đăng ký
+                                                    </h6>
+                                                    <div>
+                                                        <a href="/Admin/UserDetails/@Model.QRCode.Registration.AttendeeId" class="text-gold">
+                                                            @Model.QRCode.Registration.Attendee.FullName
+                                                        </a>
+                                                    </div>
+                                                    <div class="text-muted">@Model.QRCode.Registration.Attendee.Email</div>
+                                                    <div class="text-muted">@Model.QRCode.Registration.Attendee.PhoneNumber</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-dark border-secondary h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-clock me-2"></i>Thời gian
+                                                    </h6>
+                                                    <div class="mb-2">
+                                                        <strong>Tạo lúc:</strong>
+                                                        @Model.QRCode.GeneratedAt.ToString("dd/MM/yyyy HH:mm")
+                                                    </div>
+                                                    @if (Model.QRCode.ExpiresAt.HasValue)
+                                                    {
+                                                        <div class="mb-2">
+                                                            <strong>Hết hạn lúc:</strong>
+                                                            @Model.QRCode.ExpiresAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                                        </div>
+                                                    }
+                                                    @if (Model.QRCode.UsedAt.HasValue)
+                                                    {
+                                                        <div>
+                                                            <strong>Sử dụng lúc:</strong>
+                                                            @Model.QRCode.UsedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-6">
+                                            <div class="card bg-dark border-secondary h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-qrcode me-2"></i>QR Code
+                                                    </h6>
+                                                    <div class="text-center">
+                                                        <img src="@Model.QRCode.QrcodeImageUrl" class="img-fluid" alt="QR Code">
+                                                    </div>
+                                                    <div class="text-muted text-center mt-2">
+                                                        <small>@Model.QRCode.QrcodeValue</small>
+                                                    </div>
+                                                    <div class="text-muted text-center">
+                                                        <small>Số lần quét: @Model.QRCode.ScanCount</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-dark border-secondary h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-sign-in-alt me-2"></i>Thông tin check-in
+                                                    </h6>
+                                                    @if (Model.QRCode.Registration.CheckInTime.HasValue)
+                                                    {
+                                                        <div class="mb-2">
+                                                            <strong>Thời gian:</strong>
+                                                            @Model.QRCode.Registration.CheckInTime.Value.ToString("dd/MM/yyyy HH:mm")
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <strong>Phương thức:</strong>
+                                                            @Model.QRCode.Registration.CheckInMethod
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <strong>Địa điểm:</strong>
+                                                            @Model.QRCode.Registration.CheckInLocation
+                                                        </div>
+                                                        <div>
+                                                            <strong>Người xác nhận:</strong>
+                                                            <a href="/Admin/UserDetails/@Model.QRCode.Registration.CheckInBy" class="text-gold">
+                                                                @Model.QRCode.Registration.CheckInByNavigation?.FullName
+                                                            </a>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="text-muted">Chưa check-in</div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        @if (Model.QRCode.IsActive && !Model.QRCode.UsedAt.HasValue)
+                                        {
+                                            <button type="button" class="btn btn-info"
+                                                    onclick="scanQRCode('@Model.QRCode.QrcodeValue')">
+                                                <i class="fas fa-camera me-2"></i>Quét QR Code
+                                            </button>
+                                            <button type="button" class="btn btn-danger"
+                                                    onclick="deactivateQRCode(@Model.QRCode.QrcodeId)">
+                                                <i class="fas fa-ban me-2"></i>Vô hiệu hóa
+                                            </button>
+                                        }
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-5">
-                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-                            <h5>Không tìm thấy QR Code</h5>
-                            <a href="/Admin/QRCodes" class="btn btn-outline-secondary mt-3">
-                                <i class="fas fa-arrow-left me-2"></i>Quay lại
-                            </a>
-                        </div>
-                    }
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                <h5>Không tìm thấy QR Code</h5>
+                                <a href="/Admin/QRCodes" class="btn btn-outline-secondary mt-3">
+                                    <i class="fas fa-arrow-left me-2"></i>Quay lại
+                                </a>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Scan Modal -->
-<div class="modal fade" id="scanModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content bg-dark text-white">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title">Quét QR Code</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="qrcodeValue">
-                <div class="mb-3">
-                    <label class="form-label">Phương thức check-in</label>
-                    <select id="checkInMethod" class="form-select bg-dark text-white border-secondary">
-                        <option value="QRCode">QR Code</option>
-                        <option value="Manual">Thủ công</option>
-                    </select>
+    <!-- Scan Modal -->
+    <div class="modal fade" id="scanModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">Quét QR Code</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Địa điểm check-in</label>
-                    <input type="text" id="checkInLocation" class="form-control bg-dark text-white border-secondary">
+                <div class="modal-body">
+                    <input type="hidden" id="qrcodeValue">
+                    <div class="mb-3">
+                        <label class="form-label">Phương thức check-in</label>
+                        <select id="checkInMethod" class="form-select bg-dark text-white border-secondary">
+                            <option value="QRCode">QR Code</option>
+                            <option value="Manual">Thủ công</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Địa điểm check-in</label>
+                        <input type="text" id="checkInLocation" class="form-control bg-dark text-white border-secondary">
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-info" onclick="submitScan()">
-                    <i class="fas fa-sign-in-alt me-2"></i>Check-in
-                </button>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-info" onclick="submitScan()">
+                        <i class="fas fa-sign-in-alt me-2"></i>Check-in
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-@section Scripts {
-    <script>
-        let scanModal;
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            scanModal = new bootstrap.Modal(document.getElementById('scanModal'));
-        });
+    @section Scripts {
+        <script>
+            let scanModal;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                scanModal = new bootstrap.Modal(document.getElementById('scanModal'));
+            });
 
-        function scanQRCode(qrcodeValue) {
-            document.getElementById('qrcodeValue').value = qrcodeValue;
-            document.getElementById('checkInMethod').value = 'QRCode';
-            document.getElementById('checkInLocation').value = '';
-            scanModal.show();
-        }
-
-        function submitScan() {
-            const data = {
-                qrcodeValue: document.getElementById('qrcodeValue').value,
-                checkInMethod: document.getElementById('checkInMethod').value,
-                checkInLocation: document.getElementById('checkInLocation').value
-            };
-
-            if (!data.checkInLocation) {
-                alert('Vui lòng nhập địa điểm check-in.');
-                return;
+            function scanQRCode(qrcodeValue) {
+                document.getElementById('qrcodeValue').value = qrcodeValue;
+                document.getElementById('checkInMethod').value = 'QRCode';
+                document.getElementById('checkInLocation').value = '';
+                scanModal.show();
             }
 
-            fetch(`/Admin/QRCodes?handler=Scan`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    scanModal.hide();
-                    location.reload();
-                } else {
-                    alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
-                }
-            });
-        }
+            function submitScan() {
+                const data = {
+                    qrcodeValue: document.getElementById('qrcodeValue').value,
+                    checkInMethod: document.getElementById('checkInMethod').value,
+                    checkInLocation: document.getElementById('checkInLocation').value
+                };
 
-        function deactivateQRCode(qrcodeId) {
-            if (confirm('Bạn có chắc chắn muốn vô hiệu hóa QR Code này?')) {
-                fetch(`/Admin/QRCodes?handler=Deactivate`, {
+                if (!data.checkInLocation) {
+                    alert('Vui lòng nhập địa điểm check-in.');
+                    return;
+                }
+
+                fetch(`/Admin/QRCodes?handler=Scan`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                     },
-                    body: JSON.stringify({ qrcodeId })
+                    body: JSON.stringify(data)
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        scanModal.hide();
                         location.reload();
                     } else {
                         alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
                     }
                 });
             }
-        }
-    </script>
-} 
+
+            function deactivateQRCode(qrcodeId) {
+                if (confirm('Bạn có chắc chắn muốn vô hiệu hóa QR Code này?')) {
+                    fetch(`/Admin/QRCodes?handler=Deactivate`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({ qrcodeId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                        }
+                    });
+                }
+            }
+        </script>
+    } 
+</div>

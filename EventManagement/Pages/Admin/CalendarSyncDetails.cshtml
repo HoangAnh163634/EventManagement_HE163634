@@ -1,189 +1,191 @@
 @page "{id:int}"
 @model EventManagement.Pages.Admin.CalendarSyncDetailsModel
 @{
-    ViewData["Title"] = "Chi tiết đồng bộ lịch";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
 }
-
-<div class="container py-5">
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card bg-dark text-white">
-                <div class="card-header bg-gold text-dark d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">
-                        <i class="fas fa-calendar-alt me-2"></i>Chi tiết đồng bộ lịch
-                    </h4>
-                    <a href="/Admin/CalendarSyncs" class="btn btn-dark">
-                        <i class="fas fa-arrow-left me-2"></i>Quay lại
-                    </a>
-                </div>
-                <div class="card-body">
-                    @if (Model.CalendarSync != null)
-                    {
-                        <div class="row mb-4">
-                            <div class="col-md-12">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <div>
-                                        <h3>@Model.CalendarSync.Event.EventName</h3>
-                                        <div class="text-muted">
-                                            <i class="fas fa-calendar me-2"></i>@Model.CalendarSync.Event.StartDate.ToString("dd/MM/yyyy HH:mm") - @Model.CalendarSync.Event.EndDate.ToString("dd/MM/yyyy HH:mm")
+<partial name="~/Pages/Shared/Partials/_AdminSidebar.cshtml" />
+<div style="margin-left:240px;">
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card bg-dark text-white">
+                    <div class="card-header bg-gold text-dark d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-calendar-alt me-2"></i>Chi tiết đồng bộ lịch
+                        </h4>
+                        <a href="/Admin/CalendarSyncs" class="btn btn-dark">
+                            <i class="fas fa-arrow-left me-2"></i>Quay lại
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.CalendarSync != null)
+                        {
+                            <div class="row mb-4">
+                                <div class="col-md-12">
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <div>
+                                            <h3>@Model.CalendarSync.Event.EventName</h3>
+                                            <div class="text-muted">
+                                                <i class="fas fa-calendar me-2"></i>@Model.CalendarSync.Event.StartDate.ToString("dd/MM/yyyy HH:mm") - @Model.CalendarSync.Event.EndDate.ToString("dd/MM/yyyy HH:mm")
+                                            </div>
+                                            <div class="text-muted">
+                                                <i class="fas fa-map-marker-alt me-2"></i>@Model.CalendarSync.Event.Location
+                                            </div>
                                         </div>
-                                        <div class="text-muted">
-                                            <i class="fas fa-map-marker-alt me-2"></i>@Model.CalendarSync.Event.Location
+                                        <div class="text-end">
+                                            @{
+                                                var statusClass = Model.CalendarSync.SyncStatus switch
+                                                {
+                                                    "Synced" => "bg-success",
+                                                    "Pending" => "bg-warning",
+                                                    "Failed" => "bg-danger",
+                                                    _ => "bg-secondary"
+                                                };
+                                            }
+                                            <span class="badge @statusClass">@Model.CalendarSync.SyncStatus</span>
+                                            @if (Model.CalendarSync.IsActive)
+                                            {
+                                                <span class="badge bg-success ms-1">Hoạt động</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger ms-1">Đã dừng</span>
+                                            }
                                         </div>
                                     </div>
-                                    <div class="text-end">
-                                        @{
-                                            var statusClass = Model.CalendarSync.SyncStatus switch
-                                            {
-                                                "Synced" => "bg-success",
-                                                "Pending" => "bg-warning",
-                                                "Failed" => "bg-danger",
-                                                _ => "bg-secondary"
-                                            };
+
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-6">
+                                            <div class="card bg-dark border-secondary h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-user me-2"></i>Thông tin người dùng
+                                                    </h6>
+                                                    <div>
+                                                        <a href="/Admin/UserDetails/@Model.CalendarSync.UserId" class="text-gold">
+                                                            @Model.CalendarSync.User.FullName
+                                                        </a>
+                                                    </div>
+                                                    <div class="text-muted">@Model.CalendarSync.User.Email</div>
+                                                    <div class="text-muted">@Model.CalendarSync.User.PhoneNumber</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-dark border-secondary h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-sync me-2"></i>Thông tin đồng bộ
+                                                    </h6>
+                                                    <div class="mb-2">
+                                                        <strong>Nhà cung cấp:</strong>
+                                                        @{
+                                                            var providerClass = Model.CalendarSync.Provider switch
+                                                            {
+                                                                "Google" => "bg-danger",
+                                                                "Outlook" => "bg-primary",
+                                                                "iCloud" => "bg-info",
+                                                                _ => "bg-secondary"
+                                                            };
+                                                        }
+                                                        <span class="badge @providerClass">@Model.CalendarSync.Provider</span>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <strong>ID lịch ngoài:</strong>
+                                                        <div class="text-muted">@Model.CalendarSync.ExternalCalendarId</div>
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(Model.CalendarSync.ExternalEventId))
+                                                    {
+                                                        <div>
+                                                            <strong>ID sự kiện ngoài:</strong>
+                                                            <div class="text-muted">@Model.CalendarSync.ExternalEventId</div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-6">
+                                            <div class="card bg-dark border-secondary h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-clock me-2"></i>Thời gian
+                                                    </h6>
+                                                    <div class="mb-2">
+                                                        <strong>Lần đồng bộ cuối:</strong>
+                                                        @Model.CalendarSync.LastSyncedAt.ToString("dd/MM/yyyy HH:mm")
+                                                    </div>
+                                                    @if (Model.CalendarSync.NextSyncAt.HasValue)
+                                                    {
+                                                        <div>
+                                                            <strong>Lần đồng bộ tiếp theo:</strong>
+                                                            @Model.CalendarSync.NextSyncAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-dark border-secondary h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-exclamation-circle me-2"></i>Thông tin lỗi
+                                                    </h6>
+                                                    @if (!string.IsNullOrEmpty(Model.CalendarSync.ErrorMessage))
+                                                    {
+                                                        <div class="text-danger mb-2">@Model.CalendarSync.ErrorMessage</div>
+                                                        <div class="text-muted">
+                                                            Số lần thử: @Model.CalendarSync.RetryCount
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="text-muted">Không có lỗi</div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        @if (Model.CalendarSync.SyncStatus == "Failed")
+                                        {
+                                            <button type="button" class="btn btn-info"
+                                                    onclick="syncNow(@Model.CalendarSync.SyncId)">
+                                                <i class="fas fa-sync me-2"></i>Đồng bộ ngay
+                                            </button>
                                         }
-                                        <span class="badge @statusClass">@Model.CalendarSync.SyncStatus</span>
                                         @if (Model.CalendarSync.IsActive)
                                         {
-                                            <span class="badge bg-success ms-1">Hoạt động</span>
+                                            <button type="button" class="btn btn-danger"
+                                                    onclick="toggleSync(@Model.CalendarSync.SyncId, false)">
+                                                <i class="fas fa-stop me-2"></i>Dừng đồng bộ
+                                            </button>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-danger ms-1">Đã dừng</span>
+                                            <button type="button" class="btn btn-success"
+                                                    onclick="toggleSync(@Model.CalendarSync.SyncId, true)">
+                                                <i class="fas fa-play me-2"></i>Tiếp tục đồng bộ
+                                            </button>
                                         }
                                     </div>
                                 </div>
-
-                                <div class="row g-3 mb-4">
-                                    <div class="col-md-6">
-                                        <div class="card bg-dark border-secondary h-100">
-                                            <div class="card-body">
-                                                <h6 class="card-title">
-                                                    <i class="fas fa-user me-2"></i>Thông tin người dùng
-                                                </h6>
-                                                <div>
-                                                    <a href="/Admin/UserDetails/@Model.CalendarSync.UserId" class="text-gold">
-                                                        @Model.CalendarSync.User.FullName
-                                                    </a>
-                                                </div>
-                                                <div class="text-muted">@Model.CalendarSync.User.Email</div>
-                                                <div class="text-muted">@Model.CalendarSync.User.PhoneNumber</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="card bg-dark border-secondary h-100">
-                                            <div class="card-body">
-                                                <h6 class="card-title">
-                                                    <i class="fas fa-sync me-2"></i>Thông tin đồng bộ
-                                                </h6>
-                                                <div class="mb-2">
-                                                    <strong>Nhà cung cấp:</strong>
-                                                    @{
-                                                        var providerClass = Model.CalendarSync.Provider switch
-                                                        {
-                                                            "Google" => "bg-danger",
-                                                            "Outlook" => "bg-primary",
-                                                            "iCloud" => "bg-info",
-                                                            _ => "bg-secondary"
-                                                        };
-                                                    }
-                                                    <span class="badge @providerClass">@Model.CalendarSync.Provider</span>
-                                                </div>
-                                                <div class="mb-2">
-                                                    <strong>ID lịch ngoài:</strong>
-                                                    <div class="text-muted">@Model.CalendarSync.ExternalCalendarId</div>
-                                                </div>
-                                                @if (!string.IsNullOrEmpty(Model.CalendarSync.ExternalEventId))
-                                                {
-                                                    <div>
-                                                        <strong>ID sự kiện ngoài:</strong>
-                                                        <div class="text-muted">@Model.CalendarSync.ExternalEventId</div>
-                                                    </div>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row g-3 mb-4">
-                                    <div class="col-md-6">
-                                        <div class="card bg-dark border-secondary h-100">
-                                            <div class="card-body">
-                                                <h6 class="card-title">
-                                                    <i class="fas fa-clock me-2"></i>Thời gian
-                                                </h6>
-                                                <div class="mb-2">
-                                                    <strong>Lần đồng bộ cuối:</strong>
-                                                    @Model.CalendarSync.LastSyncedAt.ToString("dd/MM/yyyy HH:mm")
-                                                </div>
-                                                @if (Model.CalendarSync.NextSyncAt.HasValue)
-                                                {
-                                                    <div>
-                                                        <strong>Lần đồng bộ tiếp theo:</strong>
-                                                        @Model.CalendarSync.NextSyncAt.Value.ToString("dd/MM/yyyy HH:mm")
-                                                    </div>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="card bg-dark border-secondary h-100">
-                                            <div class="card-body">
-                                                <h6 class="card-title">
-                                                    <i class="fas fa-exclamation-circle me-2"></i>Thông tin lỗi
-                                                </h6>
-                                                @if (!string.IsNullOrEmpty(Model.CalendarSync.ErrorMessage))
-                                                {
-                                                    <div class="text-danger mb-2">@Model.CalendarSync.ErrorMessage</div>
-                                                    <div class="text-muted">
-                                                        Số lần thử: @Model.CalendarSync.RetryCount
-                                                    </div>
-                                                }
-                                                else
-                                                {
-                                                    <div class="text-muted">Không có lỗi</div>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex gap-2">
-                                    @if (Model.CalendarSync.SyncStatus == "Failed")
-                                    {
-                                        <button type="button" class="btn btn-info"
-                                                onclick="syncNow(@Model.CalendarSync.SyncId)">
-                                            <i class="fas fa-sync me-2"></i>Đồng bộ ngay
-                                        </button>
-                                    }
-                                    @if (Model.CalendarSync.IsActive)
-                                    {
-                                        <button type="button" class="btn btn-danger"
-                                                onclick="toggleSync(@Model.CalendarSync.SyncId, false)">
-                                            <i class="fas fa-stop me-2"></i>Dừng đồng bộ
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button type="button" class="btn btn-success"
-                                                onclick="toggleSync(@Model.CalendarSync.SyncId, true)">
-                                            <i class="fas fa-play me-2"></i>Tiếp tục đồng bộ
-                                        </button>
-                                    }
-                                </div>
                             </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-5">
-                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-                            <h5>Không tìm thấy đồng bộ lịch</h5>
-                            <a href="/Admin/CalendarSyncs" class="btn btn-outline-secondary mt-3">
-                                <i class="fas fa-arrow-left me-2"></i>Quay lại
-                            </a>
-                        </div>
-                    }
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                <h5>Không tìm thấy đồng bộ lịch</h5>
+                                <a href="/Admin/CalendarSyncs" class="btn btn-outline-secondary mt-3">
+                                    <i class="fas fa-arrow-left me-2"></i>Quay lại
+                                </a>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>

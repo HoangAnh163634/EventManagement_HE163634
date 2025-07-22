@@ -52,6 +52,13 @@
                             </li>
                         }
 
+                        @if (Context.Session.GetString("UserRole") == "Admin")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-gold" href="/Admin/Dashboard"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                            </li>
+                        }
+
                         <!-- Notifications -->
                         <li class="nav-item me-2">
                             <a class="nav-link text-white position-relative" href="/Notifications">

@@ -1,189 +1,195 @@
 @page
 @model EventManagement.Pages.Admin.UsersModel
 @{
-    ViewData["Title"] = "Quản lý người dùng";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
 }
+<partial name="~/Pages/Shared/Partials/_AdminSidebar.cshtml" />
+<div style="margin-left:240px;">
+    @{
+        ViewData["Title"] = "Quản lý người dùng";
+    }
 
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-gold mb-0">
-            <i class="fas fa-users me-2"></i>Quản lý người dùng
-        </h2>
-        <div>
-            <button type="button" class="btn btn-outline-gold me-2" onclick="exportToExcel()">
-                <i class="fas fa-file-excel me-2"></i>Xuất Excel
-            </button>
-            <button type="button" class="btn btn-outline-gold" onclick="exportToCsv()">
-                <i class="fas fa-file-csv me-2"></i>Xuất CSV
-            </button>
-        </div>
-    </div>
-
-    <!-- Search and Filter -->
-    <div class="card bg-dark border-gold mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-3">
-                    <div class="input-group">
-                        <span class="input-group-text bg-dark border-secondary">
-                            <i class="fas fa-search text-gold"></i>
-                        </span>
-                        <input type="text" name="searchTerm" class="form-control bg-dark text-white border-secondary" 
-                               placeholder="Tìm kiếm tên, email..." value="@Model.SearchTerm">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <select name="role" class="form-select bg-dark text-white border-secondary">
-                        <option value="">Tất cả vai trò</option>
-                        <option value="Admin" selected="@(Model.Role == "Admin")">Admin</option>
-                        <option value="Organizer" selected="@(Model.Role == "Organizer")">Organizer</option>
-                        <option value="Staff" selected="@(Model.Role == "Staff")">Staff</option>
-                        <option value="Attendee" selected="@(Model.Role == "Attendee")">Attendee</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select name="isActive" class="form-select bg-dark text-white border-secondary">
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="true" selected="@(Model.IsActive == true)">Active</option>
-                        <option value="false" selected="@(Model.IsActive == false)">Inactive</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <input type="date" name="startDate" class="form-control bg-dark text-white border-secondary" 
-                           value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" placeholder="Từ ngày">
-                </div>
-                <div class="col-md-2">
-                    <input type="date" name="endDate" class="form-control bg-dark text-white border-secondary" 
-                           value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" placeholder="Đến ngày">
-                </div>
-                <div class="col-md-1">
-                    <button type="submit" class="btn btn-gold w-100">
-                        <i class="fas fa-filter me-2"></i>Lọc
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Users Table -->
-    <div class="card bg-dark border-gold">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-dark table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>
-                                <a href="@Model.GetSortUrl("name")" class="text-white text-decoration-none">
-                                    Họ tên
-                                    @if (Model.SortBy == "name")
-                                    {
-                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
-                                    }
-                                </a>
-                            </th>
-                            <th>
-                                <a href="@Model.GetSortUrl("email")" class="text-white text-decoration-none">
-                                    Email
-                                    @if (Model.SortBy == "email")
-                                    {
-                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
-                                    }
-                                </a>
-                            </th>
-                            <th>Vai trò</th>
-                            <th>Trạng thái</th>
-                            <th>
-                                <a href="@Model.GetSortUrl("date")" class="text-white text-decoration-none">
-                                    Ngày tạo
-                                    @if (Model.SortBy == "date")
-                                    {
-                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
-                                    }
-                                </a>
-                            </th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var user in Model.Users)
-                        {
-                            <tr>
-                                <td>@user.FullName</td>
-                                <td>@user.Email</td>
-                                <td>
-                                    @foreach (var role in user.UserRoleUsers.Select(ur => ur.Role.RoleName))
-                                    {
-                                        <span class="badge bg-secondary me-1">@role</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (user.IsActive)
-                                    {
-                                        <span class="badge bg-success">Active</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-danger">Inactive</span>
-                                    }
-                                </td>
-                                <td>@user.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td>
-                                    <a href="/Admin/UserDetails/@user.UserId" class="btn btn-sm btn-outline-gold me-2">
-                                        <i class="fas fa-eye me-1"></i>Chi tiết
-                                    </a>
-                                    <button type="button" class="btn btn-sm @(user.IsActive ? "btn-outline-danger" : "btn-outline-success")"
-                                            onclick="toggleUserStatus(@user.UserId, @(!user.IsActive))">
-                                        <i class="fas @(user.IsActive ? "fa-ban" : "fa-check") me-1"></i>
-                                        @(user.IsActive ? "Vô hiệu hóa" : "Kích hoạt")
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-gold mb-0">
+                <i class="fas fa-users me-2"></i>Quản lý người dùng
+            </h2>
+            <div>
+                <button type="button" class="btn btn-outline-gold me-2" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel me-2"></i>Xuất Excel
+                </button>
+                <button type="button" class="btn btn-outline-gold" onclick="exportToCsv()">
+                    <i class="fas fa-file-csv me-2"></i>Xuất CSV
+                </button>
             </div>
+        </div>
 
-            <!-- Pagination -->
-            @if (Model.TotalPages > 1)
-            {
-                <div class="d-flex justify-content-between align-items-center mt-4">
-                    <div class="text-muted">
-                        Hiển thị @(((Model.CurrentPage - 1) * Model.PageSize) + 1) - @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems)) 
-                        trên tổng số @Model.TotalItems người dùng
+        <!-- Search and Filter -->
+        <div class="card bg-dark border-gold mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary">
+                                <i class="fas fa-search text-gold"></i>
+                            </span>
+                            <input type="text" name="searchTerm" class="form-control bg-dark text-white border-secondary" 
+                                   placeholder="Tìm kiếm tên, email..." value="@Model.SearchTerm">
+                        </div>
                     </div>
-                    <nav>
-                        <ul class="pagination mb-0">
-                            @if (Model.CurrentPage > 1)
-                            {
-                                <li class="page-item">
-                                    <a class="page-link bg-dark text-gold border-gold" 
-                                       href="@Model.GetPageUrl(Model.CurrentPage - 1)">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </a>
-                                </li>
-                            }
+                    <div class="col-md-2">
+                        <select name="role" class="form-select bg-dark text-white border-secondary">
+                            <option value="">Tất cả vai trò</option>
+                            <option value="Admin" selected="@(Model.Role == "Admin")">Admin</option>
+                            <option value="Organizer" selected="@(Model.Role == "Organizer")">Organizer</option>
+                            <option value="Staff" selected="@(Model.Role == "Staff")">Staff</option>
+                            <option value="Attendee" selected="@(Model.Role == "Attendee")">Attendee</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="isActive" class="form-select bg-dark text-white border-secondary">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="true" selected="@(Model.IsActive == true)">Active</option>
+                            <option value="false" selected="@(Model.IsActive == false)">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" name="startDate" class="form-control bg-dark text-white border-secondary" 
+                               value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" placeholder="Từ ngày">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" name="endDate" class="form-control bg-dark text-white border-secondary" 
+                               value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" placeholder="Đến ngày">
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-gold w-100">
+                            <i class="fas fa-filter me-2"></i>Lọc
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-                            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
-                            {
-                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                    <a class="page-link bg-dark text-gold border-gold" 
-                                       href="@Model.GetPageUrl(i)">@i</a>
-                                </li>
-                            }
-
-                            @if (Model.CurrentPage < Model.TotalPages)
-                            {
-                                <li class="page-item">
-                                    <a class="page-link bg-dark text-gold border-gold" 
-                                       href="@Model.GetPageUrl(Model.CurrentPage + 1)">
-                                        <i class="fas fa-chevron-right"></i>
+        <!-- Users Table -->
+        <div class="card bg-dark border-gold">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <a href="@Model.GetSortUrl("name")" class="text-white text-decoration-none">
+                                        Họ tên
+                                        @if (Model.SortBy == "name")
+                                        {
+                                            <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                        }
                                     </a>
-                                </li>
+                                </th>
+                                <th>
+                                    <a href="@Model.GetSortUrl("email")" class="text-white text-decoration-none">
+                                        Email
+                                        @if (Model.SortBy == "email")
+                                        {
+                                            <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                        }
+                                    </a>
+                                </th>
+                                <th>Vai trò</th>
+                                <th>Trạng thái</th>
+                                <th>
+                                    <a href="@Model.GetSortUrl("date")" class="text-white text-decoration-none">
+                                        Ngày tạo
+                                        @if (Model.SortBy == "date")
+                                        {
+                                            <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                        }
+                                    </a>
+                                </th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model.Users)
+                            {
+                                <tr>
+                                    <td>@user.FullName</td>
+                                    <td>@user.Email</td>
+                                    <td>
+                                        @foreach (var role in user.UserRoleUsers.Select(ur => ur.Role.RoleName))
+                                        {
+                                            <span class="badge bg-secondary me-1">@role</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (user.IsActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Inactive</span>
+                                        }
+                                    </td>
+                                    <td>@user.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <a href="/Admin/UserDetails/@user.UserId" class="btn btn-sm btn-outline-gold me-2">
+                                            <i class="fas fa-eye me-1"></i>Chi tiết
+                                        </a>
+                                        <button type="button" class="btn btn-sm @(user.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                                onclick="toggleUserStatus(@user.UserId, @(!user.IsActive))">
+                                            <i class="fas @(user.IsActive ? "fa-ban" : "fa-check") me-1"></i>
+                                            @(user.IsActive ? "Vô hiệu hóa" : "Kích hoạt")
+                                        </button>
+                                    </td>
+                                </tr>
                             }
-                        </ul>
-                    </nav>
+                        </tbody>
+                    </table>
                 </div>
-            }
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div class="text-muted">
+                            Hiển thị @(((Model.CurrentPage - 1) * Model.PageSize) + 1) - @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems)) 
+                            trên tổng số @Model.TotalItems người dùng
+                        </div>
+                        <nav>
+                            <ul class="pagination mb-0">
+                                @if (Model.CurrentPage > 1)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link bg-dark text-gold border-gold" 
+                                           href="@Model.GetPageUrl(Model.CurrentPage - 1)">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                }
+
+                                @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                                {
+                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link bg-dark text-gold border-gold" 
+                                           href="@Model.GetPageUrl(i)">@i</a>
+                                    </li>
+                                }
+
+                                @if (Model.CurrentPage < Model.TotalPages)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link bg-dark text-gold border-gold" 
+                                           href="@Model.GetPageUrl(Model.CurrentPage + 1)">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>

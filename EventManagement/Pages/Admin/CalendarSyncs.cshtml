@@ -1,398 +1,404 @@
 @page
 @model EventManagement.Pages.Admin.CalendarSyncsModel
 @{
-    ViewData["Title"] = "Quản lý đồng bộ lịch";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
 }
+<partial name="~/Pages/Shared/Partials/_AdminSidebar.cshtml" />
+<div style="margin-left:240px;">
+    @{
+        ViewData["Title"] = "Quản lý đồng bộ lịch";
+    }
 
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-gold mb-0">
-            <i class="fas fa-calendar-alt me-2"></i>Quản lý đồng bộ lịch
-        </h2>
-        <button type="button" class="btn btn-gold" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="fas fa-plus me-2"></i>Thêm đồng bộ
-        </button>
-    </div>
-
-    <!-- Search and Filter -->
-    <div class="card bg-dark border-gold mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-3">
-                    <div class="input-group">
-                        <span class="input-group-text bg-dark border-secondary">
-                            <i class="fas fa-search text-gold"></i>
-                        </span>
-                        <input type="text" name="searchTerm" class="form-control bg-dark text-white border-secondary" 
-                               placeholder="Tìm kiếm..." value="@Model.SearchTerm">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <select name="eventId" class="form-select bg-dark text-white border-secondary">
-                        <option value="">Tất cả sự kiện</option>
-                        @foreach (var evt in Model.Events)
-                        {
-                            <option value="@evt.EventId" selected="@(Model.EventId == evt.EventId)">
-                                @evt.EventName
-                            </option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select name="provider" class="form-select bg-dark text-white border-secondary">
-                        <option value="">Tất cả nhà cung cấp</option>
-                        <option value="Google" selected="@(Model.Provider == "Google")">Google Calendar</option>
-                        <option value="Outlook" selected="@(Model.Provider == "Outlook")">Outlook Calendar</option>
-                        <option value="iCloud" selected="@(Model.Provider == "iCloud")">iCloud Calendar</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select name="syncStatus" class="form-select bg-dark text-white border-secondary">
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="Synced" selected="@(Model.SyncStatus == "Synced")">Đã đồng bộ</option>
-                        <option value="Pending" selected="@(Model.SyncStatus == "Pending")">Chờ đồng bộ</option>
-                        <option value="Failed" selected="@(Model.SyncStatus == "Failed")">Lỗi</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select name="isActive" class="form-select bg-dark text-white border-secondary">
-                        <option value="">Tất cả hoạt động</option>
-                        <option value="true" selected="@(Model.IsActive == true)">Đang hoạt động</option>
-                        <option value="false" selected="@(Model.IsActive == false)">Đã dừng</option>
-                    </select>
-                </div>
-                <div class="col-md-1">
-                    <button type="submit" class="btn btn-gold w-100">
-                        <i class="fas fa-filter"></i>
-                    </button>
-                </div>
-            </form>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-gold mb-0">
+                <i class="fas fa-calendar-alt me-2"></i>Quản lý đồng bộ lịch
+            </h2>
+            <button type="button" class="btn btn-gold" data-bs-toggle="modal" data-bs-target="#createModal">
+                <i class="fas fa-plus me-2"></i>Thêm đồng bộ
+            </button>
         </div>
-    </div>
 
-    <!-- Calendar Syncs Table -->
-    <div class="card bg-dark border-gold">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-dark table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>
-                                <a href="@Model.GetSortUrl("event")" class="text-white text-decoration-none">
-                                    Sự kiện
-                                    @if (Model.SortBy == "event")
-                                    {
-                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
-                                    }
-                                </a>
-                            </th>
-                            <th>
-                                <a href="@Model.GetSortUrl("user")" class="text-white text-decoration-none">
-                                    Người dùng
-                                    @if (Model.SortBy == "user")
-                                    {
-                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
-                                    }
-                                </a>
-                            </th>
-                            <th>Nhà cung cấp</th>
-                            <th>
-                                <a href="@Model.GetSortUrl("date")" class="text-white text-decoration-none">
-                                    Thời gian
-                                    @if (Model.SortBy == "date")
-                                    {
-                                        <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
-                                    }
-                                </a>
-                            </th>
-                            <th>Trạng thái</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var sync in Model.CalendarSyncs)
-                        {
-                            <tr>
-                                <td>
-                                    <a href="/Admin/Events/@sync.EventId" class="text-gold">
-                                        @sync.Event.EventName
-                                    </a>
-                                    <div class="text-muted small">
-                                        @sync.Event.StartDate.ToString("dd/MM/yyyy HH:mm")
-                                    </div>
-                                </td>
-                                <td>
-                                    <a href="/Admin/UserDetails/@sync.UserId" class="text-gold">
-                                        @sync.User.FullName
-                                    </a>
-                                    <div class="text-muted small">@sync.User.Email</div>
-                                </td>
-                                <td>
-                                    @{
-                                        var providerClass = sync.Provider switch
-                                        {
-                                            "Google" => "bg-danger",
-                                            "Outlook" => "bg-primary",
-                                            "iCloud" => "bg-info",
-                                            _ => "bg-secondary"
-                                        };
-                                    }
-                                    <span class="badge @providerClass">@sync.Provider</span>
-                                    @if (!string.IsNullOrEmpty(sync.ExternalCalendarId))
-                                    {
-                                        <div class="text-muted small">@sync.ExternalCalendarId</div>
-                                    }
-                                </td>
-                                <td>
-                                    <div>Đồng bộ: @sync.LastSyncedAt.ToString("dd/MM/yyyy HH:mm")</div>
-                                    @if (sync.NextSyncAt.HasValue)
-                                    {
-                                        <div class="text-muted small">
-                                            Lần tới: @sync.NextSyncAt.Value.ToString("dd/MM/yyyy HH:mm")
-                                        </div>
-                                    }
-                                </td>
-                                <td>
-                                    <div class="mb-1">
-                                        @{
-                                            var statusClass = sync.SyncStatus switch
-                                            {
-                                                "Synced" => "bg-success",
-                                                "Pending" => "bg-warning",
-                                                "Failed" => "bg-danger",
-                                                _ => "bg-secondary"
-                                            };
-                                        }
-                                        <span class="badge @statusClass">@sync.SyncStatus</span>
-                                        @if (sync.IsActive)
-                                        {
-                                            <span class="badge bg-success ms-1">Hoạt động</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-danger ms-1">Đã dừng</span>
-                                        }
-                                    </div>
-                                    @if (!string.IsNullOrEmpty(sync.ErrorMessage))
-                                    {
-                                        <div class="text-danger small">
-                                            <i class="fas fa-exclamation-circle me-1"></i>@sync.ErrorMessage
-                                        </div>
-                                        <div class="text-muted small">
-                                            Số lần thử: @sync.RetryCount
-                                        </div>
-                                    }
-                                </td>
-                                <td>
-                                    <a href="/Admin/CalendarSyncs/@sync.SyncId" class="btn btn-sm btn-outline-gold me-2">
-                                        <i class="fas fa-eye me-1"></i>Chi tiết
-                                    </a>
-                                    @if (sync.SyncStatus == "Failed")
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-info me-2"
-                                                onclick="syncNow(@sync.SyncId)">
-                                            <i class="fas fa-sync me-1"></i>Đồng bộ
-                                        </button>
-                                    }
-                                    @if (sync.IsActive)
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                                onclick="toggleSync(@sync.SyncId, false)">
-                                            <i class="fas fa-stop me-1"></i>Dừng
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-success"
-                                                onclick="toggleSync(@sync.SyncId, true)">
-                                            <i class="fas fa-play me-1"></i>Tiếp tục
-                                        </button>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            @if (Model.TotalPages > 1)
-            {
-                <div class="d-flex justify-content-between align-items-center mt-4">
-                    <div class="text-muted">
-                        Hiển thị @(((Model.CurrentPage - 1) * Model.PageSize) + 1) - @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems)) 
-                        trên tổng số @Model.TotalItems đồng bộ
+        <!-- Search and Filter -->
+        <div class="card bg-dark border-gold mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary">
+                                <i class="fas fa-search text-gold"></i>
+                            </span>
+                            <input type="text" name="searchTerm" class="form-control bg-dark text-white border-secondary" 
+                                   placeholder="Tìm kiếm..." value="@Model.SearchTerm">
+                        </div>
                     </div>
-                    <nav>
-                        <ul class="pagination mb-0">
-                            @if (Model.CurrentPage > 1)
-                            {
-                                <li class="page-item">
-                                    <a class="page-link bg-dark text-gold border-gold" 
-                                       href="@Model.GetPageUrl(Model.CurrentPage - 1)">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </a>
-                                </li>
-                            }
-
-                            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
-                            {
-                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                    <a class="page-link bg-dark text-gold border-gold" 
-                                       href="@Model.GetPageUrl(i)">@i</a>
-                                </li>
-                            }
-
-                            @if (Model.CurrentPage < Model.TotalPages)
-                            {
-                                <li class="page-item">
-                                    <a class="page-link bg-dark text-gold border-gold" 
-                                       href="@Model.GetPageUrl(Model.CurrentPage + 1)">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </a>
-                                </li>
-                            }
-                        </ul>
-                    </nav>
-                </div>
-            }
-        </div>
-    </div>
-</div>
-
-<!-- Create Modal -->
-<div class="modal fade" id="createModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content bg-dark text-white">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title">Thêm đồng bộ lịch</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="createForm">
-                    <div class="mb-3">
-                        <label class="form-label">Sự kiện</label>
-                        <select id="eventId" class="form-select bg-dark text-white border-secondary">
+                    <div class="col-md-2">
+                        <select name="eventId" class="form-select bg-dark text-white border-secondary">
+                            <option value="">Tất cả sự kiện</option>
                             @foreach (var evt in Model.Events)
                             {
-                                <option value="@evt.EventId">@evt.EventName</option>
+                                <option value="@evt.EventId" selected="@(Model.EventId == evt.EventId)">
+                                    @evt.EventName
+                                </option>
                             }
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Người dùng</label>
-                        <select id="userId" class="form-select bg-dark text-white border-secondary">
-                            @foreach (var user in Model.Users)
-                            {
-                                <option value="@user.UserId">@user.FullName (@user.Email)</option>
-                            }
+                    <div class="col-md-2">
+                        <select name="provider" class="form-select bg-dark text-white border-secondary">
+                            <option value="">Tất cả nhà cung cấp</option>
+                            <option value="Google" selected="@(Model.Provider == "Google")">Google Calendar</option>
+                            <option value="Outlook" selected="@(Model.Provider == "Outlook")">Outlook Calendar</option>
+                            <option value="iCloud" selected="@(Model.Provider == "iCloud")">iCloud Calendar</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Nhà cung cấp</label>
-                        <select id="provider" class="form-select bg-dark text-white border-secondary">
-                            <option value="Google">Google Calendar</option>
-                            <option value="Outlook">Outlook Calendar</option>
-                            <option value="iCloud">iCloud Calendar</option>
+                    <div class="col-md-2">
+                        <select name="syncStatus" class="form-select bg-dark text-white border-secondary">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="Synced" selected="@(Model.SyncStatus == "Synced")">Đã đồng bộ</option>
+                            <option value="Pending" selected="@(Model.SyncStatus == "Pending")">Chờ đồng bộ</option>
+                            <option value="Failed" selected="@(Model.SyncStatus == "Failed")">Lỗi</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">ID lịch ngoài</label>
-                        <input type="text" id="externalCalendarId" class="form-control bg-dark text-white border-secondary">
+                    <div class="col-md-2">
+                        <select name="isActive" class="form-select bg-dark text-white border-secondary">
+                            <option value="">Tất cả hoạt động</option>
+                            <option value="true" selected="@(Model.IsActive == true)">Đang hoạt động</option>
+                            <option value="false" selected="@(Model.IsActive == false)">Đã dừng</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-gold w-100">
+                            <i class="fas fa-filter"></i>
+                        </button>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-gold" onclick="createSync()">
-                    <i class="fas fa-plus me-2"></i>Thêm đồng bộ
-                </button>
+        </div>
+
+        <!-- Calendar Syncs Table -->
+        <div class="card bg-dark border-gold">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <a href="@Model.GetSortUrl("event")" class="text-white text-decoration-none">
+                                        Sự kiện
+                                        @if (Model.SortBy == "event")
+                                        {
+                                            <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                        }
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="@Model.GetSortUrl("user")" class="text-white text-decoration-none">
+                                        Người dùng
+                                        @if (Model.SortBy == "user")
+                                        {
+                                            <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                        }
+                                    </a>
+                                </th>
+                                <th>Nhà cung cấp</th>
+                                <th>
+                                    <a href="@Model.GetSortUrl("date")" class="text-white text-decoration-none">
+                                        Thời gian
+                                        @if (Model.SortBy == "date")
+                                        {
+                                            <i class="fas fa-sort-@(Model.SortOrder == "asc" ? "up" : "down") ms-1"></i>
+                                        }
+                                    </a>
+                                </th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var sync in Model.CalendarSyncs)
+                            {
+                                <tr>
+                                    <td>
+                                        <a href="/Admin/Events/@sync.EventId" class="text-gold">
+                                            @sync.Event.EventName
+                                        </a>
+                                        <div class="text-muted small">
+                                            @sync.Event.StartDate.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="/Admin/UserDetails/@sync.UserId" class="text-gold">
+                                            @sync.User.FullName
+                                        </a>
+                                        <div class="text-muted small">@sync.User.Email</div>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var providerClass = sync.Provider switch
+                                            {
+                                                "Google" => "bg-danger",
+                                                "Outlook" => "bg-primary",
+                                                "iCloud" => "bg-info",
+                                                _ => "bg-secondary"
+                                            };
+                                        }
+                                        <span class="badge @providerClass">@sync.Provider</span>
+                                        @if (!string.IsNullOrEmpty(sync.ExternalCalendarId))
+                                        {
+                                            <div class="text-muted small">@sync.ExternalCalendarId</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div>Đồng bộ: @sync.LastSyncedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                        @if (sync.NextSyncAt.HasValue)
+                                        {
+                                            <div class="text-muted small">
+                                                Lần tới: @sync.NextSyncAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="mb-1">
+                                            @{
+                                                var statusClass = sync.SyncStatus switch
+                                                {
+                                                    "Synced" => "bg-success",
+                                                    "Pending" => "bg-warning",
+                                                    "Failed" => "bg-danger",
+                                                    _ => "bg-secondary"
+                                                };
+                                            }
+                                            <span class="badge @statusClass">@sync.SyncStatus</span>
+                                            @if (sync.IsActive)
+                                            {
+                                                <span class="badge bg-success ms-1">Hoạt động</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger ms-1">Đã dừng</span>
+                                            }
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(sync.ErrorMessage))
+                                        {
+                                            <div class="text-danger small">
+                                                <i class="fas fa-exclamation-circle me-1"></i>@sync.ErrorMessage
+                                            </div>
+                                            <div class="text-muted small">
+                                                Số lần thử: @sync.RetryCount
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="/Admin/CalendarSyncs/@sync.SyncId" class="btn btn-sm btn-outline-gold me-2">
+                                            <i class="fas fa-eye me-1"></i>Chi tiết
+                                        </a>
+                                        @if (sync.SyncStatus == "Failed")
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-info me-2"
+                                                    onclick="syncNow(@sync.SyncId)">
+                                                <i class="fas fa-sync me-1"></i>Đồng bộ
+                                            </button>
+                                        }
+                                        @if (sync.IsActive)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="toggleSync(@sync.SyncId, false)">
+                                                <i class="fas fa-stop me-1"></i>Dừng
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-success"
+                                                    onclick="toggleSync(@sync.SyncId, true)">
+                                                <i class="fas fa-play me-1"></i>Tiếp tục
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div class="text-muted">
+                            Hiển thị @(((Model.CurrentPage - 1) * Model.PageSize) + 1) - @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems)) 
+                            trên tổng số @Model.TotalItems đồng bộ
+                        </div>
+                        <nav>
+                            <ul class="pagination mb-0">
+                                @if (Model.CurrentPage > 1)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link bg-dark text-gold border-gold" 
+                                           href="@Model.GetPageUrl(Model.CurrentPage - 1)">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                }
+
+                                @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                                {
+                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link bg-dark text-gold border-gold" 
+                                           href="@Model.GetPageUrl(i)">@i</a>
+                                    </li>
+                                }
+
+                                @if (Model.CurrentPage < Model.TotalPages)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link bg-dark text-gold border-gold" 
+                                           href="@Model.GetPageUrl(Model.CurrentPage + 1)">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    </div>
+                }
             </div>
         </div>
     </div>
-</div>
 
-@section Scripts {
-    <script>
-        let createModal;
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            createModal = new bootstrap.Modal(document.getElementById('createModal'));
-        });
+    <!-- Create Modal -->
+    <div class="modal fade" id="createModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">Thêm đồng bộ lịch</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createForm">
+                        <div class="mb-3">
+                            <label class="form-label">Sự kiện</label>
+                            <select id="eventId" class="form-select bg-dark text-white border-secondary">
+                                @foreach (var evt in Model.Events)
+                                {
+                                    <option value="@evt.EventId">@evt.EventName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Người dùng</label>
+                            <select id="userId" class="form-select bg-dark text-white border-secondary">
+                                @foreach (var user in Model.Users)
+                                {
+                                    <option value="@user.UserId">@user.FullName (@user.Email)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nhà cung cấp</label>
+                            <select id="provider" class="form-select bg-dark text-white border-secondary">
+                                <option value="Google">Google Calendar</option>
+                                <option value="Outlook">Outlook Calendar</option>
+                                <option value="iCloud">iCloud Calendar</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">ID lịch ngoài</label>
+                            <input type="text" id="externalCalendarId" class="form-control bg-dark text-white border-secondary">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-gold" onclick="createSync()">
+                        <i class="fas fa-plus me-2"></i>Thêm đồng bộ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        function createSync() {
-            const data = {
-                eventId: document.getElementById('eventId').value,
-                userId: document.getElementById('userId').value,
-                provider: document.getElementById('provider').value,
-                externalCalendarId: document.getElementById('externalCalendarId').value
-            };
-
-            if (!data.externalCalendarId) {
-                alert('Vui lòng nhập ID lịch ngoài.');
-                return;
-            }
-
-            fetch(`/Admin/CalendarSyncs?handler=Create`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    createModal.hide();
-                    location.reload();
-                } else {
-                    alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
-                }
+    @section Scripts {
+        <script>
+            let createModal;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                createModal = new bootstrap.Modal(document.getElementById('createModal'));
             });
-        }
 
-        function syncNow(syncId) {
-            if (confirm('Bạn có chắc chắn muốn đồng bộ ngay bây giờ?')) {
-                fetch(`/Admin/CalendarSyncs?handler=SyncNow`, {
+            function createSync() {
+                const data = {
+                    eventId: document.getElementById('eventId').value,
+                    userId: document.getElementById('userId').value,
+                    provider: document.getElementById('provider').value,
+                    externalCalendarId: document.getElementById('externalCalendarId').value
+                };
+
+                if (!data.externalCalendarId) {
+                    alert('Vui lòng nhập ID lịch ngoài.');
+                    return;
+                }
+
+                fetch(`/Admin/CalendarSyncs?handler=Create`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                     },
-                    body: JSON.stringify({ syncId })
+                    body: JSON.stringify(data)
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        createModal.hide();
                         location.reload();
                     } else {
                         alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
                     }
                 });
             }
-        }
 
-        function toggleSync(syncId, isActive) {
-            const action = isActive ? 'tiếp tục' : 'dừng';
-            if (confirm(`Bạn có chắc chắn muốn ${action} đồng bộ này?`)) {
-                fetch(`/Admin/CalendarSyncs?handler=Toggle`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    },
-                    body: JSON.stringify({ syncId, isActive })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
-                    }
-                });
+            function syncNow(syncId) {
+                if (confirm('Bạn có chắc chắn muốn đồng bộ ngay bây giờ?')) {
+                    fetch(`/Admin/CalendarSyncs?handler=SyncNow`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({ syncId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                        }
+                    });
+                }
             }
-        }
-    </script>
-} 
+
+            function toggleSync(syncId, isActive) {
+                const action = isActive ? 'tiếp tục' : 'dừng';
+                if (confirm(`Bạn có chắc chắn muốn ${action} đồng bộ này?`)) {
+                    fetch(`/Admin/CalendarSyncs?handler=Toggle`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({ syncId, isActive })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                        }
+                    });
+                }
+            }
+        </script>
+    } 
+</div>
