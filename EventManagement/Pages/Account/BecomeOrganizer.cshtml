@@ -1,0 +1,33 @@
+@page
+@model EventManagement.Pages.Account.BecomeOrganizerModel
+@{
+    ViewData["Title"] = "Đăng ký làm Nhà tổ chức";
+}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card bg-dark border-gold">
+                <div class="card-header bg-gold text-dark">
+                    <h4 class="mb-0"><i class="fas fa-user-tie me-2"></i>Đăng ký làm Nhà tổ chức</h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+                    }
+                    else if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+                    }
+                    else
+                    {
+                        <form method="post">
+                            <p>Bạn muốn trở thành Nhà tổ chức sự kiện? Hãy gửi yêu cầu, admin sẽ duyệt trong thời gian sớm nhất.</p>
+                            <button type="submit" class="btn btn-gold"><i class="fas fa-paper-plane me-2"></i>Gửi yêu cầu</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

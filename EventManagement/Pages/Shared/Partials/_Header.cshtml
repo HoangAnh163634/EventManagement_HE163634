@@ -98,6 +98,14 @@
                                 <a class="dropdown-item text-white" href="/Account/Profile">
                                     <i class="fas fa-user me-2"></i>Thông tin cá nhân
                                 </a>
+                                @if (userRole == "Attendee")
+                                {
+                                    <form method="post" asp-page="/Account/BecomeOrganizer" class="d-block">
+                                        <button type="submit" class="dropdown-item text-white">
+                                            <i class="fas fa-user-tie me-2"></i>Đăng ký làm Nhà tổ chức
+                                        </button>
+                                    </form>
+                                }
                                 <form method="post" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index")">
                                     <button type="submit" class="dropdown-item text-white">
                                         <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất

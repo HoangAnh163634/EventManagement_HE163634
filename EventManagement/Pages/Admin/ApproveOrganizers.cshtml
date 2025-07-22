@@ -1,0 +1,114 @@
+@page
+@model EventManagement.Pages.Admin.ApproveOrganizersModel
+@{
+    ViewData["Title"] = "Duyệt yêu cầu Nhà tổ chức";
+}
+<partial name="~/Pages/Shared/Partials/_AdminSidebar.cshtml" />
+<div style="margin-left:240px;">
+    <div class="container py-5">
+        <h2 class="text-gold mb-4"><i class="fas fa-user-tie me-2"></i>Duyệt yêu cầu Nhà tổ chức</h2>
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+        }
+        <div class="card bg-dark border-gold">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Họ tên</th>
+                                <th>Email</th>
+                                <th>Số điện thoại</th>
+                                <th>Ngày gửi yêu cầu</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (Model.PendingRequests.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Không có yêu cầu nào chờ duyệt.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var req in Model.PendingRequests)
+                            {
+                                <tr>
+                                    <td>@req.User.FullName</td>
+                                    <td>@req.User.Email</td>
+                                    <td>@req.User.PhoneNumber</td>
+                                    <td>@req.AssignedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <form method="post" asp-page-handler="Approve" asp-route-userId="@req.UserId" class="d-inline">
+                                            <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check me-1"></i>Duyệt</button>
+                                        </form>
+                                        <form method="post" asp-page-handler="Reject" asp-route-userId="@req.UserId" class="d-inline ms-2">
+                                            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-times me-1"></i>Từ chối</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container py-3">
+        <h4 class="text-gold mb-3"><i class="fas fa-history me-2"></i>Lịch sử duyệt yêu cầu Nhà tổ chức</h4>
+        <div class="card bg-dark border-gold">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Họ tên</th>
+                                <th>Email</th>
+                                <th>Số điện thoại</th>
+                                <th>Ngày xử lý</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (Model.HistoryRequests.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Chưa có lịch sử duyệt nào.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var req in Model.HistoryRequests)
+                            {
+                                <tr>
+                                    <td>@req.User.FullName</td>
+                                    <td>@req.User.Email</td>
+                                    <td>@req.User.PhoneNumber</td>
+                                    <td>@req.AssignedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        @if (req.IsActive)
+                                        {
+                                            <span class="badge bg-success">Đã duyệt</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Đã từ chối</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
