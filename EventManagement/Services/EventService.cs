@@ -328,7 +328,7 @@ public class EventService
             .AnyAsync(r => r.EventId == eventId && r.AttendeeId == userId && !r.IsDeleted);
     }
 
-    public async Task<List<Event>> SearchEventsAsync(
+    public async Task<int> CountEventsAsync(
         string? searchTerm = null,
         int? eventTypeId = null,
         string? status = null,
@@ -336,21 +336,13 @@ public class EventService
         DateTime? endDate = null,
         decimal? minPrice = null,
         decimal? maxPrice = null,
-        string? sortBy = null,
-        string? sortOrder = null,
         bool includeDeleted = false)
     {
-        var query = _context.Events
-            .Include(e => e.EventType)
-            .Include(e => e.Organizer)
-            .Include(e => e.Registrations)
-            .AsQueryable();
-
+        var query = _context.Events.AsQueryable();
         if (!includeDeleted)
         {
             query = query.Where(e => !e.IsDeleted);
         }
-
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             searchTerm = searchTerm.ToLower();
@@ -361,56 +353,105 @@ public class EventService
                 (e.Tags != null && e.Tags.ToLower().Contains(searchTerm))
             );
         }
-
         if (eventTypeId.HasValue)
         {
             query = query.Where(e => e.EventTypeId == eventTypeId.Value);
         }
-
         if (!string.IsNullOrWhiteSpace(status))
         {
             query = query.Where(e => e.Status == status);
         }
-
         if (startDate.HasValue)
         {
             query = query.Where(e => e.StartDate >= startDate.Value);
         }
-
         if (endDate.HasValue)
         {
             query = query.Where(e => e.EndDate <= endDate.Value);
         }
-
         if (minPrice.HasValue)
         {
             query = query.Where(e => e.Price > minPrice.Value);
         }
-
         if (maxPrice.HasValue)
         {
             query = query.Where(e => e.Price <= maxPrice.Value);
         }
+        return await query.CountAsync();
+    }
 
+    public async Task<List<Event>> SearchEventsAsync(
+        string? searchTerm = null,
+        int? eventTypeId = null,
+        string? status = null,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null,
+        string? sortBy = null,
+        string? sortOrder = null,
+        int page = 1,
+        int pageSize = 10,
+        bool includeDeleted = false)
+    {
+        var query = _context.Events
+            .Include(e => e.EventType)
+            .Include(e => e.Organizer)
+            .Include(e => e.Registrations)
+            .AsQueryable();
+        if (!includeDeleted)
+        {
+            query = query.Where(e => !e.IsDeleted);
+        }
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            searchTerm = searchTerm.ToLower();
+            query = query.Where(e => 
+                e.EventName.ToLower().Contains(searchTerm) ||
+                e.Description.ToLower().Contains(searchTerm) ||
+                e.Location.ToLower().Contains(searchTerm) ||
+                (e.Tags != null && e.Tags.ToLower().Contains(searchTerm))
+            );
+        }
+        if (eventTypeId.HasValue)
+        {
+            query = query.Where(e => e.EventTypeId == eventTypeId.Value);
+        }
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query = query.Where(e => e.Status == status);
+        }
+        if (startDate.HasValue)
+        {
+            query = query.Where(e => e.StartDate >= startDate.Value);
+        }
+        if (endDate.HasValue)
+        {
+            query = query.Where(e => e.EndDate <= endDate.Value);
+        }
+        if (minPrice.HasValue)
+        {
+            query = query.Where(e => e.Price > minPrice.Value);
+        }
+        if (maxPrice.HasValue)
+        {
+            query = query.Where(e => e.Price <= maxPrice.Value);
+        }
         // Apply sorting
         if (!string.IsNullOrWhiteSpace(sortBy))
         {
             var isAscending = string.IsNullOrWhiteSpace(sortOrder) || sortOrder.ToLower() == "asc";
-
             query = sortBy.ToLower() switch
             {
                 "name" => isAscending 
                     ? query.OrderBy(e => e.EventName) 
                     : query.OrderByDescending(e => e.EventName),
-                
                 "price" => isAscending 
                     ? query.OrderBy(e => e.Price) 
                     : query.OrderByDescending(e => e.Price),
-                
                 "registrations" => isAscending 
                     ? query.OrderBy(e => e.Registrations.Count) 
                     : query.OrderByDescending(e => e.Registrations.Count),
-                
                 _ => isAscending 
                     ? query.OrderBy(e => e.StartDate) 
                     : query.OrderByDescending(e => e.StartDate)
@@ -420,8 +461,7 @@ public class EventService
         {
             query = query.OrderByDescending(e => e.CreatedAt);
         }
-
-        return await query.ToListAsync();
+        return await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
     }
 
     public async Task SendEventRemindersAsync()

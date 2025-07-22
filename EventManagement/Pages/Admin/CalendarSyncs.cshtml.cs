@@ -62,7 +62,6 @@ public class CalendarSyncsModel : PageModel
     {
         try
         {
-            // Kiểm tra phân quyền
             var userRole = HttpContext.Session.GetString("UserRole");
             if (userRole != "Admin")
             {
@@ -70,27 +69,15 @@ public class CalendarSyncsModel : PageModel
                 return RedirectToPage("/Index");
             }
 
-            // Lấy danh sách sự kiện và người dùng cho filter và form tạo mới
-            Events = await _eventService.GetEventsAsync();
-            UsersData = await _adminService.GetUsersAsync(
-                searchTerm: "",
-                role: null,
-                isActive: null,
-                startDate: null,
-                endDate: null,
-                sortBy: "FullName",
-                sortOrder: "asc",
-                page: 1,
-                pageSize: 100
-            );
-
-            // Lấy danh sách đồng bộ theo filter
+            // Đảm bảo Page được binding đúng
             CurrentPage = Page;
-            var (syncs, totalItems) = await _adminService.GetCalendarSyncsAsync(
+            Events = await _eventService.GetEventsAsync();
+
+            var (calendarSyncs, totalItems) = await _adminService.GetCalendarSyncsAsync(
                 SearchTerm, EventId, Provider, SyncStatus, IsActive,
                 SortBy, SortOrder, CurrentPage, PageSize);
 
-            CalendarSyncs = syncs;
+            CalendarSyncs = calendarSyncs;
             TotalItems = totalItems;
 
             return Page();
@@ -98,7 +85,7 @@ public class CalendarSyncsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading calendar syncs list");
-            TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải danh sách đồng bộ.";
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải danh sách đồng bộ lịch.";
             return RedirectToPage("/Index");
         }
     }

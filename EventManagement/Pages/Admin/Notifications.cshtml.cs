@@ -59,7 +59,6 @@ public class NotificationsModel : PageModel
     {
         try
         {
-            // Kiểm tra phân quyền
             var userRole = HttpContext.Session.GetString("UserRole");
             if (userRole != "Admin")
             {
@@ -67,37 +66,25 @@ public class NotificationsModel : PageModel
                 return RedirectToPage("/Index");
             }
 
-            EventsData = await _adminService.GetEventsAsync(
-                searchTerm: "",
-                eventTypeId: null,
-                status: null,
-                startDate: null,
-                endDate: null,
-                sortBy: "date",
-                sortOrder: "desc",
-                page: 1,
-                pageSize: 100
-            );
+            // Đảm bảo Page được binding đúng
+            CurrentPage = Page;
+            EventsData = await _adminService.GetEventsAsync(searchTerm: null, eventTypeId: null, status: null, startDate: null, endDate: null, sortBy: "date", sortOrder: "desc", page: 1, pageSize: 1000);
+            UsersData = await _adminService.GetUsersAsync(searchTerm: null, role: null, isActive: null, startDate: null, endDate: null, sortBy: "date", sortOrder: "desc", page: 1, pageSize: 1000);
 
-            UsersData = await _adminService.GetUsersAsync(
-                searchTerm: "",
-                role: null,
-                isActive: null,
-                startDate: null,
-                endDate: null,
-                sortBy: "FullName",
-                sortOrder: "asc",
-                page: 1,
-                pageSize: 100
-            );
+            var (notifications, totalItems) = await _adminService.GetNotificationsAsync(
+                SearchTerm, EventId, NotificationType, Priority, Status,
+                SortBy, SortOrder, CurrentPage, PageSize);
+
+            Notifications = notifications;
+            TotalItems = totalItems;
 
             return Page();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading notifications page");
-            TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải trang thông báo.";
-            return RedirectToPage("/Error");
+            _logger.LogError(ex, "Error loading notifications list");
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải danh sách thông báo.";
+            return RedirectToPage("/Index");
         }
     }
 

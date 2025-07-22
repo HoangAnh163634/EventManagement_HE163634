@@ -60,7 +60,6 @@ public class FeedbacksModel : PageModel
     {
         try
         {
-            // Kiểm tra phân quyền
             var userRole = HttpContext.Session.GetString("UserRole");
             if (userRole != "Admin")
             {
@@ -68,11 +67,10 @@ public class FeedbacksModel : PageModel
                 return RedirectToPage("/Index");
             }
 
-            // Lấy danh sách sự kiện cho filter
+            // Đảm bảo Page được binding đúng
+            CurrentPage = Page;
             Events = await _eventService.GetEventsAsync();
 
-            // Lấy danh sách feedback theo filter
-            CurrentPage = Page;
             var (feedbacks, totalItems) = await _adminService.GetFeedbacksAsync(
                 SearchTerm, EventId, Rating, IsApproved, IsPublic,
                 SortBy, SortOrder, CurrentPage, PageSize);

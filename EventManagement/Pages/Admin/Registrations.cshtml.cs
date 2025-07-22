@@ -60,7 +60,6 @@ public class RegistrationsModel : PageModel
     {
         try
         {
-            // Kiểm tra phân quyền
             var userRole = HttpContext.Session.GetString("UserRole");
             if (userRole != "Admin")
             {
@@ -68,11 +67,10 @@ public class RegistrationsModel : PageModel
                 return RedirectToPage("/Index");
             }
 
-            // Lấy danh sách sự kiện cho filter
+            // Đảm bảo Page được binding đúng
+            CurrentPage = Page;
             Events = await _eventService.GetEventsAsync();
 
-            // Lấy danh sách đăng ký theo filter
-            CurrentPage = Page;
             var (registrations, totalItems) = await _adminService.GetRegistrationsAsync(
                 SearchTerm, EventId, Status, StartDate, EndDate,
                 SortBy, SortOrder, CurrentPage, PageSize);

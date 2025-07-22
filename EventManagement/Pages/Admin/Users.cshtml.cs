@@ -24,6 +24,7 @@ public class UsersModel : PageModel
 
     public List<User> Users { get; set; } = new();
     public int TotalItems { get; set; }
+    [BindProperty(SupportsGet = true)]
     public int CurrentPage { get; set; } = 1;
     public int PageSize { get; set; } = 10;
     public int TotalPages => (int)Math.Ceiling(TotalItems / (double)PageSize);
@@ -49,9 +50,6 @@ public class UsersModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string SortOrder { get; set; } = "desc";
 
-    [BindProperty(SupportsGet = true)]
-    public new int Page { get; set; } = 1;
-
     public async Task<IActionResult> OnGetAsync()
     {
         try
@@ -63,7 +61,7 @@ public class UsersModel : PageModel
                 return RedirectToPage("/Index");
             }
 
-            CurrentPage = Page;
+            // Đảm bảo Page được binding đúng
             var (users, totalItems) = await _adminService.GetUsersAsync(
                 SearchTerm, Role, IsActive, StartDate, EndDate, 
                 SortBy, SortOrder, CurrentPage, PageSize);
@@ -217,16 +215,18 @@ public class UsersModel : PageModel
 
     public string GetPageUrl(int pageNumber)
     {
-        var queryParams = Request.QueryString.Value ?? "";
-        if (queryParams.Contains("page="))
+        var queryParams = new Dictionary<string, string?>
         {
-            queryParams = System.Text.RegularExpressions.Regex.Replace(queryParams, @"page=\d+", $"page={pageNumber}");
-        }
-        else
-        {
-            queryParams += (queryParams.Contains("?") ? "&" : "?") + $"page={pageNumber}";
-        }
-        return Request.Path + queryParams;
+            { "currentPage", pageNumber.ToString() },
+            { "searchTerm", SearchTerm },
+            { "role", Role },
+            { "isActive", IsActive?.ToString() },
+            { "startDate", StartDate?.ToString("yyyy-MM-dd") },
+            { "endDate", EndDate?.ToString("yyyy-MM-dd") },
+            { "sortBy", SortBy },
+            { "sortOrder", SortOrder }
+        };
+        return $"{Request.Path}?{string.Join("&", queryParams.Where(p => !string.IsNullOrEmpty(p.Value)).Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value!)}"))}";
     }
 }
 

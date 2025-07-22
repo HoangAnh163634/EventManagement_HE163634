@@ -60,7 +60,6 @@ public class QRCodesModel : PageModel
     {
         try
         {
-            // Kiểm tra phân quyền
             var userRole = HttpContext.Session.GetString("UserRole");
             if (userRole != "Admin")
             {
@@ -68,16 +67,15 @@ public class QRCodesModel : PageModel
                 return RedirectToPage("/Index");
             }
 
-            // Lấy danh sách sự kiện cho filter và form tạo mới
+            // Đảm bảo Page được binding đúng
+            CurrentPage = Page;
             Events = await _eventService.GetEventsAsync();
 
-            // Lấy danh sách QR Code theo filter
-            CurrentPage = Page;
-            var (qrcodes, totalItems) = await _adminService.GetQRCodesAsync(
+            var (qrCodes, totalItems) = await _adminService.GetQRCodesAsync(
                 SearchTerm, EventId, IsActive, IsUsed, RegistrationStatus,
                 SortBy, SortOrder, CurrentPage, PageSize);
 
-            QRCodes = qrcodes;
+            QRCodes = qrCodes;
             TotalItems = totalItems;
 
             return Page();

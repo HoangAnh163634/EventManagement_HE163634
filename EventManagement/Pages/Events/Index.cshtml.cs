@@ -43,6 +43,12 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string SortOrder { get; set; } = "asc";
 
+    [BindProperty(SupportsGet = true)]
+    public int CurrentPage { get; set; } = 1;
+    public int PageSize { get; set; } = 9;
+    public int TotalItems { get; set; }
+    public int TotalPages => (int)Math.Ceiling(TotalItems / (double)PageSize);
+
     public bool HasActiveFilters => 
         !string.IsNullOrEmpty(SearchTerm) ||
         EventTypeId.HasValue ||
@@ -90,7 +96,17 @@ public class IndexModel : PageModel
             }
         }
 
-        // Get filtered events
+        // Lấy tổng số sự kiện phù hợp
+        TotalItems = await _eventService.CountEventsAsync(
+            searchTerm: SearchTerm,
+            eventTypeId: EventTypeId,
+            status: Status,
+            startDate: StartDate,
+            endDate: EndDate,
+            minPrice: minPrice,
+            maxPrice: maxPrice);
+
+        // Lấy sự kiện theo trang
         Events = await _eventService.SearchEventsAsync(
             searchTerm: SearchTerm,
             eventTypeId: EventTypeId,
@@ -100,7 +116,9 @@ public class IndexModel : PageModel
             minPrice: minPrice,
             maxPrice: maxPrice,
             sortBy: SortBy,
-            sortOrder: SortOrder);
+            sortOrder: SortOrder,
+            page: CurrentPage,
+            pageSize: PageSize);
     }
 
     public string GetStatusClass(string status)
@@ -113,5 +131,22 @@ public class IndexModel : PageModel
             "cancelled" => "danger",
             _ => "secondary"
         };
+    }
+
+    public string GetPageUrl(int pageNumber)
+    {
+        var queryParams = new Dictionary<string, string?>
+        {
+            { "currentPage", pageNumber.ToString() },
+            { "searchTerm", SearchTerm },
+            { "eventTypeId", EventTypeId?.ToString() },
+            { "status", Status },
+            { "priceRange", PriceRange },
+            { "startDate", StartDate?.ToString("yyyy-MM-dd") },
+            { "endDate", EndDate?.ToString("yyyy-MM-dd") },
+            { "sortBy", SortBy },
+            { "sortOrder", SortOrder }
+        };
+        return $"{Request.Path}?{string.Join("&", queryParams.Where(p => !string.IsNullOrEmpty(p.Value)).Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value!)}"))}";
     }
 } 

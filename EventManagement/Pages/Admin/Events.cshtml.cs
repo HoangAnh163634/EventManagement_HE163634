@@ -60,7 +60,6 @@ public class EventsModel : PageModel
     {
         try
         {
-            // Kiểm tra phân quyền
             var userRole = HttpContext.Session.GetString("UserRole");
             if (userRole != "Admin")
             {
@@ -68,11 +67,10 @@ public class EventsModel : PageModel
                 return RedirectToPage("/Index");
             }
 
-            // Lấy danh sách loại sự kiện cho filter
-            EventTypes = await _eventService.GetEventTypesAsync(includeInactive: false);
-
-            // Lấy danh sách sự kiện theo filter
+            // Đảm bảo Page được binding đúng
             CurrentPage = Page;
+            EventTypes = await _eventService.GetEventTypesAsync();
+            
             var (events, totalItems) = await _adminService.GetEventsAsync(
                 SearchTerm, EventTypeId, Status, StartDate, EndDate,
                 SortBy, SortOrder, CurrentPage, PageSize);
