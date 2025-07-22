@@ -37,7 +37,8 @@ public class FeedbackDetailsModel : PageModel
             Feedback = await _adminService.GetFeedbackByIdAsync(id);
             if (Feedback == null)
             {
-                return Page();
+                TempData["ErrorMessage"] = "Không tìm thấy feedback.";
+                return RedirectToPage("/Admin/Feedbacks");
             }
 
             return Page();

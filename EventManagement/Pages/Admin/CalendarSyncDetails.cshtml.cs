@@ -37,7 +37,8 @@ public class CalendarSyncDetailsModel : PageModel
             CalendarSync = await _adminService.GetCalendarSyncByIdAsync(id);
             if (CalendarSync == null)
             {
-                return Page();
+                TempData["ErrorMessage"] = "Không tìm thấy đồng bộ lịch.";
+                return RedirectToPage("/Admin/CalendarSyncs");
             }
 
             return Page();

@@ -37,7 +37,8 @@ public class RegistrationDetailsModel : PageModel
             Registration = await _adminService.GetRegistrationByIdAsync(id);
             if (Registration == null)
             {
-                return Page();
+                TempData["ErrorMessage"] = "Không tìm thấy đăng ký.";
+                return RedirectToPage("/Admin/Registrations");
             }
 
             return Page();

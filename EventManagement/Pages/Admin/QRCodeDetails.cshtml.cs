@@ -37,7 +37,8 @@ public class QRCodeDetailsModel : PageModel
             QRCode = await _adminService.GetQRCodeByIdAsync(id);
             if (QRCode == null)
             {
-                return Page();
+                TempData["ErrorMessage"] = "Không tìm thấy QR Code.";
+                return RedirectToPage("/Admin/QRCodes");
             }
 
             return Page();

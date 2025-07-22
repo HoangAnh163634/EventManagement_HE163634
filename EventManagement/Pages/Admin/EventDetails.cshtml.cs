@@ -37,7 +37,8 @@ public class EventDetailsModel : PageModel
             Event = await _adminService.GetEventByIdAsync(id);
             if (Event == null)
             {
-                return Page();
+                TempData["ErrorMessage"] = "Không tìm thấy sự kiện.";
+                return RedirectToPage("/Admin/Events");
             }
 
             return Page();

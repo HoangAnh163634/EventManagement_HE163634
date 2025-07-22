@@ -37,7 +37,8 @@ public class NotificationDetailsModel : PageModel
             Notification = await _adminService.GetNotificationByIdAsync(id);
             if (Notification == null)
             {
-                return Page();
+                TempData["ErrorMessage"] = "Không tìm thấy thông báo.";
+                return RedirectToPage("/Admin/Notifications");
             }
 
             return Page();
