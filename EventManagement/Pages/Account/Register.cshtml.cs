@@ -25,30 +25,30 @@ public class RegisterModel : PageModel
 
     public class InputModel
     {
-        [Required(ErrorMessage = "Full name is required")]
-        [StringLength(100, ErrorMessage = "Full name must be between 2 and 100 characters", MinimumLength = 2)]
+        [Required(ErrorMessage = "Tên đầy đủ là bắt buộc")]
+        [StringLength(100, ErrorMessage = "Tên đầy đủ phải nằm giữa 2 và 100 ký tự", MinimumLength = 2)]
         public string FullName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Invalid email format")]
-        [StringLength(100, ErrorMessage = "Email must not exceed 100 characters")]
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Định dạng email không hợp lệ")]
+        [StringLength(100, ErrorMessage = "Email không được vượt quá 100 ký tự")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Password is required")]
-        [StringLength(100, ErrorMessage = "Password must be between 6 and 100 characters", MinimumLength = 6)]
+        [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
+        [StringLength(100, ErrorMessage = "Mật khẩu phải nằm giữa 6 và 100 ký tự", MinimumLength = 6)]
         [DataType(DataType.Password)]
         public string Password { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Please confirm your password")]
+        [Required(ErrorMessage = "Vui lòng xác nhận mật khẩu")]
         [DataType(DataType.Password)]
-        [Compare("Password", ErrorMessage = "Password and confirmation password do not match")]
+        [Compare("Password", ErrorMessage = "Mật khẩu và xác nhận mật khẩu không khớp")]
         public string ConfirmPassword { get; set; } = string.Empty;
 
-        [Phone(ErrorMessage = "Invalid phone number format")]
-        [StringLength(20, ErrorMessage = "Phone number must not exceed 20 characters")]
+        [Phone(ErrorMessage = "Định dạng số điện thoại không hợp lệ")]
+        [StringLength(20, ErrorMessage = "Số điện thoại không được vượt quá 20 ký tự")]
         public string? PhoneNumber { get; set; }
 
-        [Required(ErrorMessage = "You must agree to the terms and conditions")]
+        [Required(ErrorMessage = "Bạn phải đồng ý với các điều khoản và điều kiện")]
         public bool AgreeToTerms { get; set; } = false;
     }
 
@@ -73,7 +73,7 @@ public class RegisterModel : PageModel
 
             if (!result.Success)
             {
-                ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Registration failed.");
+                ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Đăng ký thất bại.");
                 return Page();
             }
 
@@ -97,7 +97,7 @@ public class RegisterModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred during user registration");
-            ModelState.AddModelError(string.Empty, "An error occurred while creating your account. Please try again.");
+            ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi tạo tài khoản của bạn. Vui lòng thử lại.");
             return Page();
         }
     }

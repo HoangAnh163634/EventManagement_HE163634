@@ -10,8 +10,8 @@
             <div class="card bg-gray-dark shadow-lg">
                 <div class="card-body p-4">
                     <div class="text-center mb-4">
-                        <h2 class="text-gold mb-1">Create Account</h2>
-                        <p class="text-muted">Join our event community</p>
+                        <h2 class="text-gold mb-1">Tạo tài khoản mới</h2>
+                        <p class="text-muted">Đăng ký để bắt đầu sử dụng</p>
                     </div>
 
                     <form method="post">
@@ -19,52 +19,37 @@
                         
                         <div class="row">
                             <div class="col-12 mb-3">
-                                <label asp-for="Input.FullName" class="form-label text-white">
-                                    Full Name <span class="text-danger">*</span>
-                                </label>
-                                <input asp-for="Input.FullName" class="form-control bg-dark text-white border-secondary" 
-                                       placeholder="Enter your full name" autocomplete="name" />
+                                <label asp-for="Input.FullName" class="form-label text-white">Họ và tên</label>
+                                <input asp-for="Input.FullName" class="form-control bg-dark text-white border-secondary" placeholder="Nhập họ và tên" />
                                 <span asp-validation-for="Input.FullName" class="text-danger"></span>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="Input.Email" class="form-label text-white">
-                                    Email Address <span class="text-danger">*</span>
-                                </label>
-                                <input asp-for="Input.Email" class="form-control bg-dark text-white border-secondary" 
-                                       placeholder="Enter your email" autocomplete="username" />
+                                <label asp-for="Input.Email" class="form-label text-white">Email</label>
+                                <input asp-for="Input.Email" class="form-control bg-dark text-white border-secondary" placeholder="Nhập email" />
                                 <span asp-validation-for="Input.Email" class="text-danger"></span>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label asp-for="Input.PhoneNumber" class="form-label text-white">
-                                    Phone Number
-                                </label>
-                                <input asp-for="Input.PhoneNumber" class="form-control bg-dark text-white border-secondary" 
-                                       placeholder="Enter your phone number" autocomplete="tel" />
+                                <label asp-for="Input.PhoneNumber" class="form-label text-white">Số điện thoại</label>
+                                <input asp-for="Input.PhoneNumber" class="form-control bg-dark text-white border-secondary" placeholder="Nhập số điện thoại (không bắt buộc)" />
                                 <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="Input.Password" class="form-label text-white">
-                                    Password <span class="text-danger">*</span>
-                                </label>
-                                <input asp-for="Input.Password" class="form-control bg-dark text-white border-secondary" 
-                                       placeholder="Create a strong password" autocomplete="new-password" />
+                                <label asp-for="Input.Password" class="form-label text-white">Mật khẩu</label>
+                                <input asp-for="Input.Password" class="form-control bg-dark text-white border-secondary" placeholder="Nhập mật khẩu" />
                                 <span asp-validation-for="Input.Password" class="text-danger"></span>
                                 <small class="text-muted">
                                     Must contain: 8+ characters, uppercase, lowercase, number, special character
                                 </small>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label asp-for="Input.ConfirmPassword" class="form-label text-white">
-                                    Confirm Password <span class="text-danger">*</span>
-                                </label>
-                                <input asp-for="Input.ConfirmPassword" class="form-control bg-dark text-white border-secondary" 
-                                       placeholder="Confirm your password" autocomplete="new-password" />
+                                <label asp-for="Input.ConfirmPassword" class="form-label text-white">Xác nhận mật khẩu</label>
+                                <input asp-for="Input.ConfirmPassword" class="form-control bg-dark text-white border-secondary" placeholder="Nhập lại mật khẩu" />
                                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
                             </div>
                         </div>
@@ -72,15 +57,14 @@
                         <div class="mb-3 form-check">
                             <input asp-for="Input.AgreeToTerms" class="form-check-input" type="checkbox" />
                             <label asp-for="Input.AgreeToTerms" class="form-check-label text-white">
-                                I agree to the <a href="#" class="text-gold">Terms and Conditions</a> and 
-                                <a href="#" class="text-gold">Privacy Policy</a> <span class="text-danger">*</span>
+                                Tôi đồng ý với <a href="#" class="text-gold">điều khoản & chính sách</a>
                             </label>
                             <span asp-validation-for="Input.AgreeToTerms" class="text-danger d-block"></span>
                         </div>
 
                         <div class="d-grid">
-                            <button type="submit" id="submitButton" class="btn btn-custom-gold btn-lg" disabled>
-                                <i class="fas fa-user-plus me-2"></i>Create Account
+                            <button type="submit" class="btn btn-custom-gold btn-lg w-100" id="submitButton">
+                                <i class="fas fa-user-plus me-2"></i>Đăng ký
                             </button>
                             <small class="text-muted text-center mt-2" id="submitHelp">
                                 Please fill all required fields correctly to continue
@@ -90,10 +74,10 @@
 
                     <hr class="my-4" style="border-color: #2F2F2F;">
                     
-                    <div class="text-center">
-                        <p class="text-muted mb-2">Already have an account?</p>
+                    <div class="text-center mt-3">
+                        <p class="text-muted mb-2">Đã có tài khoản?</p>
                         <a href="/Account/Login" class="btn btn-outline-gold">
-                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                            <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
                         </a>
                     </div>
                 </div>

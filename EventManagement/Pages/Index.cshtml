@@ -8,17 +8,17 @@
 <!-- Hero Section -->
 <section class="hero bg-dark text-white py-5" style="background: linear-gradient(to bottom, #1A1A1A, #0F0F0F); position: relative;">
     <div class="container text-center py-5" style="position: relative; z-index: 2;">
-        <h1 class="display-4 fw-bold mb-3 hero-text">Plan Your Perfect Event</h1>
-        <p class="lead mb-4">Create, manage, and elevate your events with elegance.</p>
+        <h1 class="display-4 fw-bold mb-3 hero-text">Lên kế hoạch cho sự kiện hoàn hảo của bạn</h1>
+        <p class="lead mb-4">Tạo, quản lý và nâng tầm sự kiện của bạn một cách chuyên nghiệp.</p>
         @if (HttpContext.Session.GetString("UserEmailVerified") == "true")
         {
-            <a href="/Events/Create" class="btn btn-custom-gold btn-lg mx-2">Create Event</a>
+            <a href="/Events/Create" class="btn btn-custom-gold btn-lg mx-2">Tạo sự kiện</a>
         }
         else if (HttpContext.Session.GetInt32("UserId") != null)
         {
-            <a class="btn btn-custom-gold btn-lg mx-2 disabled" tabindex="-1" aria-disabled="true" title="Bạn cần xác thực email để tạo sự kiện">Create Event (Xác thực email)</a>
+            <a class="btn btn-custom-gold btn-lg mx-2 disabled" tabindex="-1" aria-disabled="true" title="Bạn cần xác thực email để tạo sự kiện">Tạo sự kiện (Cần xác thực email)</a>
         }
-        <a href="#events" class="btn btn-outline-light btn-lg mx-2">Explore Events</a>
+        <a href="/Events" class="btn btn-outline-light btn-lg mx-2">Khám phá sự kiện</a>
     </div>
     <div class="parallax-overlay"></div>
 </section>
@@ -26,7 +26,7 @@
 <!-- Latest Events Section -->
 <section id="events" class="py-5 bg-black">
     <div class="container">
-        <h2 class="text-center mb-4 text-white">Latest Events</h2>
+        <h2 class="text-center mb-4 text-white">Sự kiện mới nhất</h2>
         <div class="row">
             @if (Model.Events.Any())
             {
@@ -45,7 +45,7 @@
                                     <i class="fas fa-map-marker-alt me-2 text-gold"></i>@evt.Location
                                 </p>
                                 <p class="card-text">
-                                    <i class="fas fa-user me-2 text-gold"></i>by @evt.Organizer.FullName
+                                    <i class="fas fa-user me-2 text-gold"></i>Người tổ chức: @evt.Organizer.FullName
                                 </p>
                                 @if (evt.Price.HasValue && evt.Price > 0)
                                 {
@@ -56,19 +56,19 @@
                                 else
                                 {
                                     <p class="card-text">
-                                        <i class="fas fa-gift me-2 text-gold"></i>Free Event
+                                        <i class="fas fa-gift me-2 text-gold"></i>Miễn phí
                                     </p>
                                 }
                             </div>
                             <div class="card-footer text-center bg-dark">
-                                <a href="/Events/Details/@evt.EventId" class="btn btn-outline-gold">Details</a>
+                                <a href="/Events/Details/@evt.EventId" class="btn btn-outline-gold">Chi tiết</a>
                                 @if (HttpContext.Session.GetString("UserEmailVerified") == "true")
                                 {
-                                    <a href="/Registrations/Create?eventId=@evt.EventId" class="btn btn-gold">Register</a>
+                                    <a href="/Registrations/Create?eventId=@evt.EventId" class="btn btn-gold">Đăng ký</a>
                                 }
                                 else if (HttpContext.Session.GetInt32("UserId") != null)
                                 {
-                                    <a class="btn btn-gold disabled" tabindex="-1" aria-disabled="true" title="Bạn cần xác thực email để đăng ký">Register (Xác thực email)</a>
+                                    <a class="btn btn-gold disabled" tabindex="-1" aria-disabled="true" title="Bạn cần xác thực email để đăng ký">Đăng ký (Cần xác thực email)</a>
                                 }
                             </div>
                         </div>
@@ -80,10 +80,10 @@
                 <div class="col-12">
                     <div class="text-center py-5">
                         <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
-                        <h4 class="text-white mb-3">No Events Available</h4>
-                        <p class="text-muted mb-4">There are no upcoming events at the moment.</p>
+                        <h4 class="text-white mb-3">Chưa có sự kiện nào</h4>
+                        <p class="text-muted mb-4">Hiện tại chưa có sự kiện nào sắp diễn ra.</p>
                         <a href="/Events/Create" class="btn btn-custom-gold">
-                            <i class="fas fa-plus-circle me-2"></i>Create First Event
+                            <i class="fas fa-plus-circle me-2"></i>Tạo sự kiện đầu tiên
                         </a>
                     </div>
                 </div>
@@ -95,28 +95,28 @@
 <!-- Automate Your Events Section -->
 <section class="py-5 bg-dark">
     <div class="container text-center">
-        <h2 class="text-white mb-5">Automate Your Events</h2>
-        <p class="lead text-muted mb-4">Streamline your event planning with powerful automation.</p>
+        <h2 class="text-white mb-5">Tự động hóa sự kiện của bạn</h2>
+        <p class="lead text-muted mb-4">Đơn giản hóa việc tổ chức sự kiện với các công cụ tự động mạnh mẽ.</p>
         <div class="row">
             <div class="col-md-4 mb-4">
                 <div class="card h-100 bg-gray-dark shadow-lg text-white p-4">
                     <i class="fas fa-paint-brush fa-3x mb-3"></i>
-                    <h4>Customize</h4>
-                    <p>Tailor invitations and registration to your unique style.</p>
+                    <h4>Tùy biến</h4>
+                    <p>Cá nhân hóa thư mời và đăng ký theo phong cách của bạn.</p>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100 bg-gray-dark shadow-lg text-white p-4">
                     <i class="fas fa-sliders-h fa-3x mb-3"></i>
-                    <h4>Control</h4>
-                    <p>Manage events with multi-part RSVPs and custom options.</p>
+                    <h4>Kiểm soát</h4>
+                    <p>Quản lý sự kiện với RSVP nhiều phần và các tuỳ chọn linh hoạt.</p>
                 </div>
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100 bg-gray-dark shadow-lg text-white p-4">
                     <i class="fas fa-robot fa-3x mb-3"></i>
-                    <h4>Automate</h4>
-                    <p>Simplify planning, communications, and reporting.</p>
+                    <h4>Tự động hóa</h4>
+                    <p>Tự động hóa lập kế hoạch, liên lạc và báo cáo.</p>
                 </div>
             </div>
         </div>
@@ -128,8 +128,8 @@
     <div class="container">
         <div class="row align-items-center">
             <div class="col-md-6">
-                <h2 class="text-white mb-4">Keep the Spotlight on Your Event and Brand</h2>
-                <p class="lead text-muted">Unlike other platforms, we focus on a seamless, branded experience that wows your guests without clutter.</p>
+                <h2 class="text-white mb-4">Giữ sự chú ý cho sự kiện và thương hiệu của bạn</h2>
+                <p class="lead text-muted">Khác với các nền tảng khác, chúng tôi tập trung vào trải nghiệm thương hiệu liền mạch, gây ấn tượng với khách mời mà không rườm rà.</p>
             </div>
             <div class="col-md-6">
                 <div class="carousel slide" id="spotlightCarousel" data-bs-ride="carousel">
@@ -158,60 +158,60 @@
 <!-- The Tools and Features Section -->
 <section class="py-5 bg-dark">
     <div class="container text-center">
-        <h2 class="text-white mb-5">The Tools and Features You Need</h2>
+        <h2 class="text-white mb-5">Công cụ và tính năng bạn cần</h2>
         <div class="row g-4 tool-grid">
             <div class="col-md-4">
                 <div class="card h-100 bg-gray-light shadow-lg p-4 tool-card" data-content="Send personalized email invitations to your guests.">
                     <i class="fas fa-envelope fa-2x mb-3"></i>
-                    <h5>Email Invitations</h5>
+                    <h5>Gửi thư mời qua email</h5>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card h-100 bg-gray-light shadow-lg p-4 tool-card" data-content="Manage online registrations and RSVP responses efficiently.">
                     <i class="fas fa-check-circle fa-2x mb-3"></i>
-                    <h5>Online Registration & RSVP</h5>
+                    <h5>Đăng ký trực tuyến & xác nhận tham dự</h5>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card h-100 bg-gray-light shadow-lg p-4 tool-card" data-content="Collect custom data with flexible fields for your events.">
                     <i class="fas fa-plus fa-2x mb-3"></i>
-                    <h5>Custom Data Collection</h5>
+                    <h5>Thu thập dữ liệu tuỳ chỉnh</h5>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card h-100 bg-gray-light shadow-lg p-4 tool-card" data-content="Organize and manage your guest lists with ease.">
                     <i class="fas fa-users fa-2x mb-3"></i>
-                    <h5>Guest List Management</h5>
+                    <h5>Quản lý danh sách khách mời</h5>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card h-100 bg-gray-light shadow-lg p-4 tool-card" data-content="Sync events with your calendar for better planning.">
                     <i class="fas fa-calendar-alt fa-2x mb-3"></i>
-                    <h5>Calendar Sync</h5>
+                    <h5>Đồng bộ lịch</h5>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card h-100 bg-gray-light shadow-lg p-4 tool-card" data-content="Use QR codes for fast and secure check-in.">
                     <i class="fas fa-qrcode fa-2x mb-3"></i>
-                    <h5>QR Check-in</h5>
+                    <h5>Check-in bằng QR</h5>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card h-100 bg-gray-light shadow-lg p-4 tool-card" data-content="Ensure event privacy with advanced security settings.">
                     <i class="fas fa-lock fa-2x mb-3"></i>
-                    <h5>Event Privacy</h5>
+                    <h5>Bảo mật sự kiện</h5>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card h-100 bg-gray-light shadow-lg p-4 tool-card" data-content="Receive real-time notifications for event updates.">
                     <i class="fas fa-bell fa-2x mb-3"></i>
-                    <h5>Notifications</h5>
+                    <h5>Thông báo</h5>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card h-100 bg-gray-light shadow-lg p-4 tool-card" data-content="Generate detailed feedback reports from attendees.">
                     <i class="fas fa-chart-pie fa-2x mb-3"></i>
-                    <h5>Feedback Reports</h5>
+                    <h5>Báo cáo phản hồi</h5>
                 </div>
             </div>
         </div>
@@ -221,7 +221,7 @@
 <!-- User Reviews Section -->
 <section class="py-5 bg-black">
     <div class="container">
-        <h2 class="text-center mb-5 text-white">User Reviews</h2>
+        <h2 class="text-center mb-5 text-white">Đánh giá của người dùng</h2>
         <div class="carousel slide" id="reviewCarousel" data-bs-ride="carousel">
             <div class="carousel-inner">
                 <div class="carousel-item active">
@@ -231,9 +231,9 @@
                                 <div class="d-flex align-items-center">
                                     <img src="https://picsum.photos/50/50?random=1" class="rounded-circle me-3" alt="Reviewer">
                                     <div>
-                                        <p class="card-text">"RSVPify saved me the hassle of chasing people down to confirm attendance. It simplified connecting with employees and importing contact info."</p>
+                                        <p class="card-text">"RSVPify giúp tôi không còn phải vất vả xác nhận sự tham dự. Việc kết nối với nhân viên và nhập thông tin liên hệ trở nên đơn giản hơn rất nhiều."</p>
                                         <h6 class="card-subtitle mb-2 text-gold">- Ashley N.</h6>
-                                        <p class="text-muted">HR Specialist</p>
+                                        <p class="text-muted">Chuyên viên nhân sự</p>
                                     </div>
                                 </div>
                             </div>
@@ -243,9 +243,9 @@
                                 <div class="d-flex align-items-center">
                                     <img src="https://picsum.photos/50/50?random=2" class="rounded-circle me-3" alt="Reviewer">
                                     <div>
-                                        <p class="card-text">"Used RSVPify for our Christmas Party. Due to COVID, we did a 'Pop-up' picnic with food and alcohol, and the software helped us organize well."</p>
+                                        <p class="card-text">"Tôi đã dùng RSVPify cho tiệc Giáng sinh. Nhờ phần mềm này, chúng tôi tổ chức picnic ngoài trời rất thuận lợi dù có nhiều hạn chế vì COVID."</p>
                                         <h6 class="card-subtitle mb-2 text-gold">- Rebecca R.</h6>
-                                        <p class="text-muted">Senior Administration Officer</p>
+                                        <p class="text-muted">Quản lý hành chính cấp cao</p>
                                     </div>
                                 </div>
                             </div>
@@ -259,9 +259,9 @@
                                 <div class="d-flex align-items-center">
                                     <img src="https://picsum.photos/50/50?random=3" class="rounded-circle me-3" alt="Reviewer">
                                     <div>
-                                        <p class="card-text">"QR check-in and notifications made our event seamless. Highly recommend!"</p>
+                                        <p class="card-text">"Check-in QR và thông báo giúp sự kiện của chúng tôi diễn ra suôn sẻ. Rất đáng để sử dụng!"</p>
                                         <h6 class="card-subtitle mb-2 text-gold">- Michael J.</h6>
-                                        <p class="text-muted">Event Coordinator</p>
+                                        <p class="text-muted">Điều phối viên sự kiện</p>
                                     </div>
                                 </div>
                             </div>
@@ -285,8 +285,8 @@
                 <img src="https://picsum.photos/500/350?random=4" class="img-fluid" alt="Privacy Image">
             </div>
             <div class="col-md-4 mb-4">
-                <h2 class="text-white mb-4">Privacy is at our Core</h2>
-                <p class="lead text-muted">We ensure your event data and guest information are secure with advanced encryption.</p>
+                <h2 class="text-white mb-4">Bảo mật là cốt lõi của chúng tôi</h2>
+                <p class="lead text-muted">Chúng tôi đảm bảo dữ liệu sự kiện và thông tin khách mời của bạn luôn an toàn với công nghệ mã hóa tiên tiến.</p>
             </div>
         </div>
     </div>
@@ -295,8 +295,8 @@
 <!-- Call-to-Action Section -->
 <section class="py-5 bg-dark text-center">
     <div class="container">
-        <h2 class="text-white mb-4">Ready to Get Started?</h2>
-        <a href="/Events/Create" class="btn btn-gold btn-lg">Get Started Now</a>
+        <h2 class="text-white mb-4">Sẵn sàng bắt đầu?</h2>
+        <a href="/Events/Create" class="btn btn-gold btn-lg">Bắt đầu ngay</a>
     </div>
 </section>
 

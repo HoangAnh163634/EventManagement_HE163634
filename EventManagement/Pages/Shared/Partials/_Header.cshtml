@@ -20,12 +20,12 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link text-white" href="/">
-                            <i class="fas fa-home me-1"></i>Home
+                            <i class="fas fa-home me-1"></i>Trang chủ
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="/Events">
-                            <i class="fas fa-calendar-alt me-1"></i>Events
+                            <i class="fas fa-calendar-alt me-1"></i>Sự kiện
                         </a>
                     </li>
 
@@ -39,7 +39,7 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-white" href="/Events/Create">
-                                    <i class="fas fa-plus-circle me-1"></i>Create Event
+                                    <i class="fas fa-plus-circle me-1"></i>Tạo sự kiện
                                 </a>
                             </li>
                         }
@@ -47,7 +47,7 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-secondary disabled" tabindex="-1" aria-disabled="true" title="Bạn cần xác thực email để tạo sự kiện">
-                                    <i class="fas fa-plus-circle me-1"></i>Create Event (Xác thực email)
+                                    <i class="fas fa-plus-circle me-1"></i>Tạo sự kiện (Cần xác thực email)
                                 </a>
                             </li>
                         }
@@ -55,7 +55,14 @@
                         @if (Context.Session.GetString("UserRole") == "Admin")
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-gold" href="/Admin/Dashboard"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                                <a class="nav-link text-gold" href="/Admin/Dashboard"><i class="fas fa-tachometer-alt me-1"></i>Bảng điều khiển</a>
+                            </li>
+                        }
+
+                        @if (Context.Session.GetInt32("UserId") != null)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-gold" href="/Events/MyEvents"><i class="fas fa-calendar-check me-1"></i>Sự kiện của tôi</a>
                             </li>
                         }
 
@@ -103,12 +110,12 @@
                     {
                         <li class="nav-item">
                             <a class="nav-link text-white" href="/Account/Login">
-                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                                <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link btn btn-outline-gold ms-2 px-3" href="/Account/Register">
-                                <i class="fas fa-user-plus me-1"></i>Register
+                                <i class="fas fa-user-plus me-1"></i>Đăng ký
                             </a>
                         </li>
                     }

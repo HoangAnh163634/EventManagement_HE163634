@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using EventManagement.Models;
 using EventManagement.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventManagement.Pages.Events;
 
@@ -18,6 +19,7 @@ public class DetailsModel : PageModel
     public bool IsOrganizer { get; set; }
     public bool CanRegister { get; set; }
     public bool IsEmailVerified { get; set; }
+    public List<Registration> Participants { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -33,6 +35,13 @@ public class DetailsModel : PageModel
             IsOrganizer = await _eventService.IsOrganizerAsync(id, userId.Value);
             CanRegister = await _eventService.CanRegisterAsync(id);
             IsEmailVerified = HttpContext.Session.GetString("UserEmailVerified") == "true";
+            if (IsOrganizer)
+            {
+                Participants = Event.Registrations
+                    .Where(r => !r.IsDeleted)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .ToList();
+            }
         }
 
         return Page();
