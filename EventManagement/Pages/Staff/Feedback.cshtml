@@ -1,0 +1,73 @@
+@page
+@model EventManagement.Pages.Staff.FeedbackModel
+@{
+    ViewData["Title"] = "Feedback (Staff)";
+    Layout = "../Shared/_Layout.cshtml";
+}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-3">
+            @await Html.PartialAsync("../Shared/Partials/_StaffSidebar")
+        </div>
+        <div class="col-lg-9">
+            <div class="card bg-dark border-gold mb-4">
+                <div class="card-header bg-gold text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>Feedback từ người tham gia
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Sự kiện</th>
+                                    <th>Người tham gia</th>
+                                    <th>Đánh giá</th>
+                                    <th>Bình luận</th>
+                                    <th>Thời gian</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var fb in Model.Feedbacks.OrderByDescending(f => f.SubmittedAt))
+                                {
+                                    <tr>
+                                        <td>@fb.Event.EventName</td>
+                                        <td>@fb.Attendee.FullName</td>
+                                        <td>
+                                            @if (fb.Rating.HasValue)
+                                            {
+                                                <span class="badge bg-success">@fb.Rating/5</span>
+                                            }
+                                        </td>
+                                        <td>@fb.Comments</td>
+                                        <td>@fb.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav aria-label="Pagination">
+                            <ul class="pagination justify-content-center mt-3">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="?Page=@(Model.CurrentPage - 1)">&laquo;</a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link" href="?Page=@i">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="?Page=@(Model.CurrentPage + 1)">&raquo;</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

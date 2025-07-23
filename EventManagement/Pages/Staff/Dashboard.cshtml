@@ -1,0 +1,100 @@
+@page
+@model EventManagement.Pages.Staff.DashboardModel
+@{
+    ViewData["Title"] = "Staff Dashboard";
+}
+<div class="container py-5">
+    <h2 class="text-gold mb-4"><i class="fas fa-user-shield me-2"></i>Staff Dashboard</h2>
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng sự kiện</h5>
+                    <h2>@Model.TotalEvents</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng đăng ký</h5>
+                    <h2>@Model.TotalRegistrations</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng check-in</h5>
+                    <h2>@Model.TotalCheckIns</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng feedback</h5>
+                    <h2>@Model.TotalFeedbacks</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card bg-dark border-gold mb-4">
+        <div class="card-body">
+            <h5 class="text-gold mb-3">Danh sách sự kiện</h5>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Tên sự kiện</th>
+                            <th>Thời gian</th>
+                            <th>Địa điểm</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var evt in Model.Events)
+                        {
+                            <tr>
+                                <td>@evt.EventName</td>
+                                <td>@evt.StartDate.ToString("dd/MM/yyyy HH:mm") - @evt.EndDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@evt.Location</td>
+                                <td>@evt.Status</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="card bg-dark border-gold mb-4">
+        <div class="card-body">
+            <h5 class="text-gold mb-3">Danh sách đăng ký</h5>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Sự kiện</th>
+                            <th>Người đăng ký</th>
+                            <th>Thời gian</th>
+                            <th>Trạng thái</th>
+                            <th>Check-in</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var reg in Model.Registrations)
+                        {
+                            <tr>
+                                <td>@reg.Event.EventName</td>
+                                <td>@reg.Attendee.FullName</td>
+                                <td>@reg.RegistrationDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@reg.Status</td>
+                                <td>@(reg.Status == "CheckedIn" ? "Đã check-in" : "Chưa check-in")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div> 

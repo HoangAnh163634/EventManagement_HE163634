@@ -96,7 +96,7 @@ public class RegisterModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred during user registration");
+            _logger.LogError(ex, "Đã xảy ra lỗi khi tạo tài khoản của bạn");
             ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi tạo tài khoản của bạn. Vui lòng thử lại.");
             return Page();
         }

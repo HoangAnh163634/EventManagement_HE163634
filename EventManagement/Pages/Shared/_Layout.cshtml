@@ -45,6 +45,15 @@
 <body class="d-flex flex-column min-vh-100 bg-black text-white">
     <partial name="Partials/_Header" />
 
+    @if (Context.Session.GetString("UserRole") == "Staff")
+    {
+        <partial name="~/Pages/Shared/Partials/_StaffSidebar.cshtml" />
+    }
+    else if (Context.Session.GetString("UserRole") == "Admin")
+    {
+        <partial name="~/Pages/Shared/Partials/_AdminSidebar.cshtml" />
+    }
+
     <!-- Custom Verification Banner - Completely separate from Bootstrap alerts -->
     @if (Context.Session.GetInt32("UserId") != null && Context.Session.GetString("UserEmailVerified") == "false")
     {

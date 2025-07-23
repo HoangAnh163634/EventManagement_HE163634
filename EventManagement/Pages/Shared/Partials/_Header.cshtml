@@ -67,15 +67,30 @@
                         }
 
                         <!-- Notifications -->
-                        <li class="nav-item me-2">
-                            <a class="nav-link text-white position-relative" href="/Notifications">
-                                <i class="fas fa-bell"></i>
-                                @if (unreadCount > 0)
-                                {
-                                    <span class="badge bg-danger">@unreadCount</span>
-                                }
-                            </a>
-                        </li>
+                        @if (Context.Session.GetString("UserRole") == "Staff")
+                        {
+                            <li class="nav-item me-2">
+                                <a class="nav-link text-white position-relative" href="/Staff/Notifications">
+                                    <i class="fas fa-bell"></i>
+                                    @if (unreadCount > 0)
+                                    {
+                                        <span class="badge bg-danger">@unreadCount</span>
+                                    }
+                                </a>
+                            </li>
+                        }
+                        else if (Context.Session.GetString("UserRole") == "User")
+                        {
+                            <li class="nav-item me-2">
+                                <a class="nav-link text-white position-relative" href="/Account/Notifications">
+                                    <i class="fas fa-bell"></i>
+                                    @if (unreadCount > 0)
+                                    {
+                                        <span class="badge bg-danger">@unreadCount</span>
+                                    }
+                                </a>
+                            </li>
+                        }
                         
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle text-gold" href="#" id="navbarDropdown" role="button" onclick="toggleDropdown(event)" aria-expanded="false">

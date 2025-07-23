@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace EventManagement.Pages.Account;
 
+#pragma warning disable CS0618
 public class ProfileModel : PageModel
 {
     private readonly EventManagementDbContext _context;
@@ -33,6 +34,8 @@ public class ProfileModel : PageModel
     public User CurrentUser { get; set; } = default!;
     public List<string> UserRoles { get; set; } = new();
     public List<Event> RegisteredEvents { get; set; } = new();
+    [BindProperty]
+    public IFormFile? AvatarUpload { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -84,6 +87,34 @@ public class ProfileModel : PageModel
         if (await TryUpdateModelAsync(user, "User",
             u => u.FullName, u => u.PhoneNumber))
         {
+            // Xử lý upload avatar nếu có
+            if (AvatarUpload != null && AvatarUpload.Length > 0)
+            {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                var ext = Path.GetExtension(AvatarUpload.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(ext))
+                {
+                    TempData["ErrorMessage"] = "Chỉ cho phép file ảnh JPG, PNG, GIF.";
+                    return RedirectToPage();
+                }
+                if (AvatarUpload.Length > 2 * 1024 * 1024)
+                {
+                    TempData["ErrorMessage"] = "Ảnh đại diện không được vượt quá 2MB.";
+                    return RedirectToPage();
+                }
+                var uploadsFolder = Path.Combine("wwwroot", "uploads", "avatars");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+                var fileName = $"avatar_{user.UserId}_{DateTime.UtcNow:yyyyMMddHHmmss}{ext}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await AvatarUpload.CopyToAsync(stream);
+                }
+                user.ProfileImageUrl = $"/uploads/avatars/{fileName}";
+            }
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             TempData["SuccessMessage"] = "Cập nhật thông tin thành công.";
@@ -209,4 +240,5 @@ public class ProfileModel : PageModel
         }
         return RedirectToPage();
     }
-} 
+}
+#pragma warning restore CS0618 

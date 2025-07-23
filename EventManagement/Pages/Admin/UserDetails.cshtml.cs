@@ -40,7 +40,7 @@ public class UserDetailsModel : PageModel
             }
 
             // Lấy thông tin user và danh sách role
-            User = await _adminService.GetUserByIdAsync(id) ?? new User();
+            User = await _adminService.GetUserByIdAsync(id, false) ?? new User();
             if (User == null)
             {
                 return Page();
@@ -108,7 +108,7 @@ public class UserDetailsModel : PageModel
             }
 
             // Gửi email thông báo
-            var user = await _adminService.GetUserByIdAsync(id);
+            var user = await _adminService.GetUserByIdAsync(id, false);
             if (user == null)
             {
                 return new JsonResult(new { success = false, message = "Không tìm thấy người dùng." });

@@ -27,7 +27,6 @@ public class NotificationService
     public async Task<List<Notification>> GetUserNotificationsAsync(int userId)
     {
         return await _context.Notifications
-            .Include(n => n.Event)
             .Where(n => n.UserId == userId)
             .OrderByDescending(n => n.SentAt)
             .ToListAsync();

@@ -52,7 +52,7 @@ public class LoginModel : PageModel
         
         if (user == null)
         {
-            ModelState.AddModelError(string.Empty, "Invalid email or password.");
+            ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không đúng.");
             return Page();
         }
 
@@ -74,7 +74,7 @@ public class LoginModel : PageModel
             HttpContext.Session.SetString("RememberMe", "true");
         }
 
-        TempData["SuccessMessage"] = $"Welcome back, {user.FullName}!";
+        TempData["SuccessMessage"] = $"Chào mừng trở lại, {user.FullName}!";
 
         // Redirect to return URL or default page
         if (!string.IsNullOrEmpty(Input.ReturnUrl) && Url.IsLocalUrl(Input.ReturnUrl))

@@ -1,0 +1,29 @@
+@* Sidebar dành cho staff *@
+@if (Context.Session.GetString("UserRole") == "Staff")
+{
+    <aside class="admin-sidebar bg-dark border-end border-gold p-3 vh-100 position-fixed" style="width: 240px; top: 56px; left: 0; z-index: 1030;">
+        <h5 class="text-gold mb-4"><i class="fas fa-user-shield me-2"></i>Staff</h5>
+        <ul class="nav flex-column">
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="/Staff/Dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="#"><i class="fas fa-calendar-alt me-2"></i>Sự kiện</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="#"><i class="fas fa-ticket-alt me-2"></i>Đăng ký</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="#"><i class="fas fa-sign-in-alt me-2"></i>Check-in</a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white" href="#"><i class="fas fa-star me-2"></i>Feedback</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center" href="/Staff/Notifications">
+                    <i class="fas fa-bell me-2"></i>Thông báo
+                </a>
+            </li>
+        </ul>
+    </aside>
+} 

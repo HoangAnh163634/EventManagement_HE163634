@@ -10,15 +10,18 @@ public class EventService
     private readonly EventManagementDbContext _context;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<EventService> _logger;
+    private readonly EmailService _emailService;
 
     public EventService(
         EventManagementDbContext context,
         IWebHostEnvironment environment,
-        ILogger<EventService> logger)
+        ILogger<EventService> logger,
+        EmailService emailService)
     {
         _context = context;
         _environment = environment;
         _logger = logger;
+        _emailService = emailService;
     }
 
     public async Task<List<Event>> GetAllEventsAsync(bool includeDeleted = false)
@@ -45,6 +48,33 @@ public class EventService
             .Include(e => e.Registrations)
             .Include(e => e.Feedbacks)
             .FirstOrDefaultAsync(e => e.EventId == id && !e.IsDeleted);
+    }
+
+    public async Task<Event?> GetEventByIdAsync(int id, bool includeDeleted)
+    {
+        var query = _context.Events
+            .Include(e => e.EventType)
+            .Include(e => e.Organizer)
+            .Include(e => e.Registrations)
+            .Include(e => e.Feedbacks)
+            .AsQueryable();
+        if (!includeDeleted)
+            query = query.Where(e => !e.IsDeleted);
+        return await query.FirstOrDefaultAsync(e => e.EventId == id);
+    }
+    public async Task UpdateEventAsync(Event evt)
+    {
+        _context.Events.Update(evt);
+        await _context.SaveChangesAsync();
+    }
+    public async Task DeleteEventPermanentlyAsync(int id)
+    {
+        var evt = await _context.Events.FindAsync(id);
+        if (evt != null)
+        {
+            _context.Events.Remove(evt);
+            await _context.SaveChangesAsync();
+        }
     }
 
     public async Task<Event> CreateEventAsync(EventViewModel model, int organizerId)
@@ -467,14 +497,13 @@ public class EventService
     public async Task SendEventRemindersAsync()
     {
         var now = DateTime.UtcNow;
-        var tomorrow = now.AddDays(1);
         var nextWeek = now.AddDays(7);
 
         // Get upcoming events
         var upcomingEvents = await _context.Events
             .Include(e => e.Registrations)
                 .ThenInclude(r => r.Attendee)
-            .Where(e => 
+            .Where(e =>
                 !e.IsDeleted &&
                 e.Status == "Upcoming" &&
                 e.StartDate > now &&
@@ -487,9 +516,20 @@ public class EventService
                 .Where(r => !r.IsDeleted && r.Status == "Registered")
                 .ToList();
 
-            // TODO: Implement email sending using MailKit in EmailService
-            _logger.LogInformation("Found {Count} registrations to send reminders for event {EventName}", 
-                registrations.Count, evt.EventName);
+            foreach (var reg in registrations)
+            {
+                var attendee = reg.Attendee;
+                if (attendee != null && attendee.IsActive && attendee.IsEmailVerified)
+                {
+                    var emailBody = $@"<p>Chào {attendee.FullName},</p>\n<p>Đây là email nhắc bạn về sự kiện <strong>{evt.EventName}</strong> sắp diễn ra.</p>\n<ul>\n<li>Thời gian: {evt.StartDate:dd/MM/yyyy HH:mm} - {evt.EndDate:dd/MM/yyyy HH:mm}</li>\n<li>Địa điểm: {evt.Location}</li>\n</ul>\n<p>Vui lòng đến đúng giờ và mang theo mã QR để check-in.</p>\n<p>Trân trọng,<br>Ban tổ chức</p>";
+                    await _emailService.SendEmailAsync(
+                        attendee.Email,
+                        $"[Nhắc sự kiện] {evt.EventName}",
+                        emailBody,
+                        attendee.FullName
+                    );
+                }
+            }
         }
     }
 

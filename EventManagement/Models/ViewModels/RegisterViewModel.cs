@@ -5,42 +5,42 @@ namespace EventManagement.Models.ViewModels;
 
 public class RegisterViewModel : IValidatableObject
 {
-    [Required(ErrorMessage = "Full name is required")]
-    [StringLength(100, ErrorMessage = "Full name must be between 2 and 100 characters", MinimumLength = 2)]
-    [RegularExpression(@"^[a-zA-ZÀ-ỹ\s]+$", ErrorMessage = "Full name can only contain letters and spaces")]
-    [Display(Name = "Full Name")]
+    [Required(ErrorMessage = "Tên đầy đủ là bắt buộc")]
+    [StringLength(100, ErrorMessage = "Tên đầy đủ phải từ 2 đến 100 ký tự", MinimumLength = 2)]
+    [RegularExpression(@"^[a-zA-ZÀ-ỹ\s]+$", ErrorMessage = "Tên chỉ được chứa chữ cái và khoảng trắng")]
+    [Display(Name = "Họ và tên")]
     public string FullName { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Email is required")]
-    [EmailAddress(ErrorMessage = "Please enter a valid email address")]
-    [StringLength(100, ErrorMessage = "Email must not exceed 100 characters")]
-    [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email format")]
-    [Display(Name = "Email Address")]
+    [Required(ErrorMessage = "Email là bắt buộc")]
+    [EmailAddress(ErrorMessage = "Định dạng email không hợp lệ")]
+    [StringLength(100, ErrorMessage = "Email không được vượt quá 100 ký tự")]
+    [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Định dạng email không hợp lệ")]
+    [Display(Name = "Email")]
     public string Email { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Password is required")]
-    [StringLength(100, ErrorMessage = "Password must be between 8 and 100 characters", MinimumLength = 8)]
+    [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
+    [StringLength(100, ErrorMessage = "Mật khẩu phải từ 8 đến 100 ký tự", MinimumLength = 8)]
     [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", 
-        ErrorMessage = "Password must contain at least 8 characters with uppercase, lowercase, number and special character")]
+        ErrorMessage = "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt")]
     [DataType(DataType.Password)]
-    [Display(Name = "Password")]
+    [Display(Name = "Mật khẩu")]
     public string Password { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Please confirm your password")]
+    [Required(ErrorMessage = "Vui lòng xác nhận mật khẩu")]
     [DataType(DataType.Password)]
-    [Compare("Password", ErrorMessage = "Password and confirmation password do not match")]
-    [Display(Name = "Confirm Password")]
+    [Compare("Password", ErrorMessage = "Mật khẩu và xác nhận mật khẩu không khớp")]
+    [Display(Name = "Xác nhận mật khẩu")]
     public string ConfirmPassword { get; set; } = string.Empty;
 
-    [Phone(ErrorMessage = "Please enter a valid phone number")]
-    [RegularExpression(@"^(\+84|0)[3|5|7|8|9][0-9]{8}$", ErrorMessage = "Please enter a valid Vietnamese phone number")]
-    [StringLength(15, ErrorMessage = "Phone number must not exceed 15 characters")]
-    [Display(Name = "Phone Number")]
+    [Phone(ErrorMessage = "Định dạng số điện thoại không hợp lệ")]
+    [RegularExpression(@"^(\+84|0)[3|5|7|8|9][0-9]{8}$", ErrorMessage = "Vui lòng nhập số điện thoại Việt Nam hợp lệ")]
+    [StringLength(15, ErrorMessage = "Số điện thoại không được vượt quá 15 ký tự")]
+    [Display(Name = "Số điện thoại")]
     public string? PhoneNumber { get; set; }
 
-    [Required(ErrorMessage = "You must agree to the terms and conditions to create an account")]
-    [Range(typeof(bool), "true", "true", ErrorMessage = "You must agree to the terms and conditions")]
-    [Display(Name = "I agree to the Terms and Conditions")]
+    [Required(ErrorMessage = "Bạn phải đồng ý với điều khoản và điều kiện để tạo tài khoản")]
+    [Range(typeof(bool), "true", "true", ErrorMessage = "Bạn phải đồng ý với điều khoản và điều kiện")]
+    [Display(Name = "Tôi đồng ý với Điều khoản & Chính sách")]
     public bool AgreeToTerms { get; set; } = false;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

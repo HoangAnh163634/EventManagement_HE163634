@@ -1,0 +1,186 @@
+@page
+@model EventManagement.Pages.Staff.RegistrationsModel
+@{
+    ViewData["Title"] = "Quản lý đăng ký (Staff)";
+    Layout = "../Shared/_Layout.cshtml";
+}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-3">
+            @await Html.PartialAsync("../Shared/Partials/_StaffSidebar")
+        </div>
+        <div class="col-lg-9">
+            <div class="card bg-dark border-gold mb-4">
+                <div class="card-header bg-gold text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>Quản lý đăng ký
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <input type="text" name="SearchTerm" class="form-control bg-dark text-white border-secondary" placeholder="Tìm kiếm tên/email..." value="@Model.SearchTerm">
+                        </div>
+                        <div class="col-md-3">
+                            <select name="EventId" class="form-select bg-dark text-white border-secondary">
+                                <option value="">Tất cả sự kiện</option>
+                                @foreach (var evt in Model.Events)
+                                {
+                                    <option value="@evt.EventId" selected="@(Model.EventId == evt.EventId)">@evt.EventName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="Status" class="form-select bg-dark text-white border-secondary">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="Pending" selected="@(Model.Status == "Pending")">Chờ duyệt</option>
+                                <option value="Confirmed" selected="@(Model.Status == "Confirmed")">Đã duyệt</option>
+                                <option value="CheckedIn" selected="@(Model.Status == "CheckedIn")">Đã check-in</option>
+                                <option value="Cancelled" selected="@(Model.Status == "Cancelled")">Đã hủy</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-gold w-100">
+                                <i class="fas fa-filter"></i> Lọc
+                            </button>
+                        </div>
+                    </form>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Người đăng ký</th>
+                                    <th>Sự kiện</th>
+                                    <th>Ngày đăng ký</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var reg in Model.Registrations)
+                                {
+                                    <tr>
+                                        <td>@reg.Attendee.FullName<br /><small class="text-muted">@reg.Attendee.Email</small></td>
+                                        <td>@reg.Event.EventName</td>
+                                        <td>@reg.RegistrationDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td><span class="badge bg-@GetStatusClass(reg.Status)">@reg.Status</span></td>
+                                        <td>
+                                            @if (reg.Status == "Pending")
+                                            {
+                                                <button class="btn btn-sm btn-outline-success me-2" onclick="approveRegistration(@reg.RegistrationId)"><i class="fas fa-check me-1"></i>Duyệt</button>
+                                            }
+                                            @if (reg.Status == "Confirmed" && !reg.CheckInTime.HasValue)
+                                            {
+                                                <button class="btn btn-sm btn-outline-info me-2" onclick="checkInRegistration(@reg.RegistrationId)"><i class="fas fa-sign-in-alt me-1"></i>Check-in</button>
+                                            }
+                                            @if (reg.Status != "Cancelled" && reg.Status != "CheckedIn")
+                                            {
+                                                <button class="btn btn-sm btn-outline-danger" onclick="cancelRegistration(@reg.RegistrationId)"><i class="fas fa-ban me-1"></i>Hủy</button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav aria-label="Pagination">
+                            <ul class="pagination justify-content-center mt-3">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="?Page=@(Model.CurrentPage - 1)&SearchTerm=@Model.SearchTerm&EventId=@Model.EventId&Status=@Model.Status">&laquo;</a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link" href="?Page=@i&SearchTerm=@Model.SearchTerm&EventId=@Model.EventId&Status=@Model.Status">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="?Page=@(Model.CurrentPage + 1)&SearchTerm=@Model.SearchTerm&EventId=@Model.EventId&Status=@Model.Status">&raquo;</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@functions {
+    public string GetStatusClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "pending" => "warning",
+            "confirmed" => "primary",
+            "checkedin" => "success",
+            "cancelled" => "danger",
+            _ => "secondary"
+        };
+    }
+}
+@section Scripts {
+<script>
+    function approveRegistration(registrationId) {
+        if (confirm('Bạn có chắc chắn muốn duyệt đăng ký này?')) {
+            fetch('?handler=Approve', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ registrationId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra.');
+                }
+            });
+        }
+    }
+    function cancelRegistration(registrationId) {
+        if (confirm('Bạn có chắc chắn muốn hủy đăng ký này?')) {
+            fetch('?handler=Cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ registrationId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra.');
+                }
+            });
+        }
+    }
+    function checkInRegistration(registrationId) {
+        if (confirm('Xác nhận check-in cho đăng ký này?')) {
+            fetch('?handler=CheckIn', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ registrationId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra.');
+                }
+            });
+        }
+    }
+</script>
+} 

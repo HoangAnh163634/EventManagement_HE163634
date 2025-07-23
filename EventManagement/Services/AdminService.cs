@@ -289,22 +289,25 @@ public class AdminService
         }
     }
 
-    public async Task<User?> GetUserByIdAsync(int id)
+    public async Task<User?> GetUserByIdAsync(int id, bool includeDeleted)
     {
-        try
+        var query = _context.Users.AsQueryable();
+        if (!includeDeleted)
+            query = query.Where(u => !u.IsDeleted);
+        return await query.FirstOrDefaultAsync(u => u.UserId == id);
+    }
+    public async Task UpdateUserAsync(User user)
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+    }
+    public async Task DeleteUserPermanentlyAsync(int id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user != null)
         {
-            return await _context.Users
-                .Include(u => u.UserRoleUsers)
-                    .ThenInclude(ur => ur.Role)
-                .Include(u => u.Events)
-                .Include(u => u.RegistrationAttendees)
-                    .ThenInclude(r => r.Event)
-                .FirstOrDefaultAsync(u => u.UserId == id && !u.IsDeleted);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting user by id {UserId}", id);
-            throw;
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
         }
     }
 
@@ -1626,5 +1629,12 @@ public class AdminService
             _logger.LogError(ex, "Error toggling calendar sync {SyncId}", syncId);
             throw;
         }
+    }
+
+    public async Task<List<User>> GetDeletedUsersAsync()
+    {
+        return await _context.Users
+            .Where(u => u.IsDeleted)
+            .ToListAsync();
     }
 } 

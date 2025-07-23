@@ -45,6 +45,19 @@ public class RegistrationService
             .FirstOrDefaultAsync(r => r.RegistrationId == id && !r.IsDeleted);
     }
 
+    public async Task<Registration?> GetRegistrationByIdAsync(int id, bool includeDeleted)
+    {
+        var query = _context.Registrations
+            .Include(r => r.Event)
+            .Include(r => r.Attendee)
+            .Include(r => r.Qrcode)
+            .Include(r => r.Feedback)
+            .AsQueryable();
+        if (!includeDeleted)
+            query = query.Where(r => !r.IsDeleted);
+        return await query.FirstOrDefaultAsync(r => r.RegistrationId == id);
+    }
+
     public async Task<Registration> RegisterForEventAsync(int eventId, int userId, string? specialRequests = null)
     {
         var evt = await _context.Events
@@ -231,6 +244,40 @@ public class RegistrationService
 
         await _context.SaveChangesAsync();
         return registration;
+    }
+
+    public async Task<List<Registration>> GetAllRegistrationsAsync()
+    {
+        return await _context.Registrations
+            .Include(r => r.Event)
+            .Include(r => r.Attendee)
+            .Where(r => !r.IsDeleted)
+            .ToListAsync();
+    }
+
+    public async Task UpdateRegistrationAsync(Registration reg)
+    {
+        _context.Registrations.Update(reg);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<Registration>> GetDeletedRegistrationsAsync()
+    {
+        return await _context.Registrations
+            .Include(r => r.Event)
+            .Include(r => r.Attendee)
+            .Where(r => r.IsDeleted)
+            .ToListAsync();
+    }
+
+    public async Task DeleteRegistrationPermanentlyAsync(int id)
+    {
+        var reg = await _context.Registrations.FindAsync(id);
+        if (reg != null)
+        {
+            _context.Registrations.Remove(reg);
+            await _context.SaveChangesAsync();
+        }
     }
 
     private async Task<Qrcode> GenerateQrCodeAsync(Registration registration)
