@@ -40,7 +40,7 @@ public class UserDetailsModel : PageModel
             }
 
             // Lấy thông tin user và danh sách role
-            User = await _adminService.GetUserByIdAsync(id);
+            User = await _adminService.GetUserByIdAsync(id) ?? new User();
             if (User == null)
             {
                 return Page();
@@ -109,6 +109,10 @@ public class UserDetailsModel : PageModel
 
             // Gửi email thông báo
             var user = await _adminService.GetUserByIdAsync(id);
+            if (user == null)
+            {
+                return new JsonResult(new { success = false, message = "Không tìm thấy người dùng." });
+            }
             var emailBody = $@"<p>Chào {user.FullName},</p>
 <p>Mật khẩu của bạn đã được reset bởi Admin.</p>
 <p>Mật khẩu mới của bạn là: <strong>{newPassword}</strong></p>

@@ -53,12 +53,11 @@ public class EditModel : PageModel
         }
 
         // Map event to view model
-        Event = new EventViewModel
+        Event = evt != null ? new EventViewModel
         {
             EventId = evt.EventId,
             EventName = evt.EventName,
             Description = evt.Description,
-            EventTypeId = evt.EventTypeId,
             StartDate = evt.StartDate,
             EndDate = evt.EndDate,
             Location = evt.Location,
@@ -69,10 +68,11 @@ public class EditModel : PageModel
             Status = evt.Status,
             RegistrationDeadline = evt.RegistrationDeadline,
             Price = evt.Price,
-            Currency = evt.Currency,
+            Currency = evt.Currency!,
+            EventTypeId = evt.EventTypeId,
             BannerImageUrl = evt.BannerImageUrl,
             Tags = evt.Tags
-        };
+        } : new EventViewModel();
 
         // Load event types for dropdown
         Event.EventTypes = await _eventService.GetEventTypesAsync();
@@ -111,11 +111,11 @@ public class EditModel : PageModel
             TempData["SuccessMessage"] = "Sự kiện đã được cập nhật thành công!";
             return RedirectToPage("/Events/Details", new { id = updatedEvent.EventId });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ModelState.AddModelError(string.Empty, "Có lỗi xảy ra khi cập nhật sự kiện. Vui lòng thử lại.");
-            Event.EventTypes = await _eventService.GetEventTypesAsync();
-            return Page();
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi cập nhật sự kiện.";
         }
+        Event.EventTypes = await _eventService.GetEventTypesAsync();
+        return Page();
     }
 } 

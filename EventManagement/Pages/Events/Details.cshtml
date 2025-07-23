@@ -348,21 +348,21 @@
         // Share functions
         function shareOnFacebook() {
             const url = encodeURIComponent(window.location.href);
-            const title = encodeURIComponent('@Model.Event.EventName');
+            const title = encodeURIComponent('@(Model.Event != null ? Model.Event.EventName : "")');
             window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${title}`, '_blank');
             logShare('Facebook');
         }
 
         function shareOnTwitter() {
             const url = encodeURIComponent(window.location.href);
-            const text = encodeURIComponent('@Model.Event.EventName - @Model.Event.StartDate.ToString("dd/MM/yyyy HH:mm") tại @Model.Event.Location');
+            const text = encodeURIComponent('@(Model.Event != null ? Model.Event.EventName : "") - @(Model.Event != null ? Model.Event.StartDate.ToString("dd/MM/yyyy HH:mm") : "") tại @(Model.Event != null ? Model.Event.Location : "")');
             window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
             logShare('Twitter');
         }
 
         function shareOnWhatsApp() {
             const url = encodeURIComponent(window.location.href);
-            const text = encodeURIComponent('@Model.Event.EventName - @Model.Event.StartDate.ToString("dd/MM/yyyy HH:mm") tại @Model.Event.Location');
+            const text = encodeURIComponent('@(Model.Event != null ? Model.Event.EventName : "") - @(Model.Event != null ? Model.Event.StartDate.ToString("dd/MM/yyyy HH:mm") : "") tại @(Model.Event != null ? Model.Event.Location : "")');
             window.open(`https://wa.me/?text=${text}%0A${url}`, '_blank');
             logShare('WhatsApp');
         }

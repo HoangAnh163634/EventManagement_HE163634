@@ -120,17 +120,19 @@
                                 <tr>
                                     <td>
                                         <a href="/Admin/Events/@sync.EventId" class="text-gold">
-                                            @sync.Event.EventName
+                                            @(sync.Event != null ? sync.Event.EventName : "Sự kiện đã bị xóa")
                                         </a>
                                         <div class="text-muted small">
-                                            @sync.Event.StartDate.ToString("dd/MM/yyyy HH:mm")
+                                            @(sync.Event != null ? sync.Event.StartDate.ToString("dd/MM/yyyy HH:mm") : "")
                                         </div>
                                     </td>
                                     <td>
                                         <a href="/Admin/UserDetails/@sync.UserId" class="text-gold">
-                                            @sync.User.FullName
+                                            @(sync.User != null ? sync.User.FullName : "Người dùng đã bị xóa")
                                         </a>
-                                        <div class="text-muted small">@sync.User.Email</div>
+                                        <div class="text-muted small">
+                                            @(sync.User != null ? sync.User.Email : "")
+                                        </div>
                                     </td>
                                     <td>
                                         @{
@@ -162,7 +164,7 @@
                                             @{
                                                 var statusClass = sync.SyncStatus switch
                                                 {
-                                                    "Synced" => "bg-success",
+                                                    "Success" => "bg-success",
                                                     "Pending" => "bg-warning",
                                                     "Failed" => "bg-danger",
                                                     _ => "bg-secondary"
@@ -317,6 +319,12 @@
         </div>
     </div>
 
+    <!-- Thêm nút đồng bộ toàn bộ -->
+    <div class="d-flex justify-content-end mb-3">
+        <button type="button" class="btn btn-outline-gold" onclick="syncAll()">
+            <i class="fas fa-sync me-2"></i>Đồng bộ toàn bộ sự kiện lên Google Calendar
+        </button>
+    </div>
     @section Scripts {
         <script>
             let createModal;
@@ -388,6 +396,26 @@
                             'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                         },
                         body: JSON.stringify({ syncId, isActive })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                        }
+                    });
+                }
+            }
+
+            function syncAll() {
+                if (confirm('Bạn có chắc chắn muốn đồng bộ toàn bộ sự kiện lên Google Calendar cho tất cả user?')) {
+                    fetch(`/Admin/CalendarSyncs?handler=SyncAll`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        }
                     })
                     .then(response => response.json())
                     .then(data => {

@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using EventManagement.Services;
 
 namespace EventManagement.Services;
 
@@ -18,17 +19,20 @@ public class AdminService
     private readonly ILogger<AdminService> _logger;
     private readonly IConfiguration _configuration;
     private readonly EmailService _emailService;
+    private readonly GoogleCalendarService _googleCalendarService;
 
     public AdminService(
         EventManagementDbContext context, 
         ILogger<AdminService> logger, 
         IConfiguration configuration,
-        EmailService emailService)
+        EmailService emailService,
+        GoogleCalendarService googleCalendarService)
     {
         _context = context;
         _logger = logger;
         _configuration = configuration;
         _emailService = emailService;
+        _googleCalendarService = googleCalendarService;
     }
 
     public async Task<AdminDashboardViewModel> GetDashboardAsync()
@@ -1491,12 +1495,19 @@ public class AdminService
                 .FirstOrDefaultAsync(c => 
                     c.EventId == eventId && 
                     c.UserId == userId && 
-                    c.Provider == provider &&
-                    c.IsActive);
+                    c.Provider == provider);
 
             if (existingSync != null)
             {
-                throw new InvalidOperationException("Đã tồn tại đồng bộ đang hoạt động cho sự kiện và người dùng này.");
+                // Cập nhật lại bản ghi cũ
+                existingSync.ExternalCalendarId = externalCalendarId;
+                existingSync.LastSyncedAt = DateTime.Now;
+                existingSync.NextSyncAt = DateTime.Now.AddHours(1);
+                existingSync.SyncStatus = "Pending";
+                existingSync.RetryCount = 0;
+                existingSync.IsActive = true;
+                await _context.SaveChangesAsync();
+                return existingSync;
             }
 
             var sync = new CalendarSync
@@ -1542,13 +1553,40 @@ public class AdminService
                 throw new InvalidOperationException("Đồng bộ đã bị dừng.");
             }
 
-            // TODO: Thực hiện đồng bộ với calendar provider
+            // Thực hiện đồng bộ với Google Calendar nếu provider là Google
+            if (sync.Provider == "Google" && !string.IsNullOrEmpty(sync.SyncToken))
+            {
+                // Giả sử SyncToken lưu accessToken; thực tế nên lưu refreshToken và xử lý refresh
+                var @event = new Google.Apis.Calendar.v3.Data.Event
+                {
+                    Summary = sync.Event.EventName,
+                    Description = sync.Event.Description,
+                    Start = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = sync.Event.StartDate },
+                    End = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = sync.Event.EndDate },
+                    Location = sync.Event.Location
+                };
+                try
+                {
+                    var created = await _googleCalendarService.CreateGoogleEventAsync(sync.SyncToken, @event);
+                    sync.ExternalEventId = created.Id;
+                    sync.SyncStatus = "Success";
+                    sync.ErrorMessage = null;
+                }
+                catch (Exception ex)
+                {
+                    sync.SyncStatus = "Failed";
+                    sync.ErrorMessage = ex.Message;
+                    sync.RetryCount++;
+                }
+            }
+            else
+            {
+                sync.SyncStatus = "Failed";
+                sync.ErrorMessage = "Chưa hỗ trợ provider hoặc thiếu token.";
+                sync.RetryCount++;
+            }
             sync.LastSyncedAt = DateTime.Now;
             sync.NextSyncAt = DateTime.Now.AddHours(1);
-            sync.SyncStatus = "Synced";
-            sync.ErrorMessage = null;
-            sync.RetryCount = 0;
-
             await _context.SaveChangesAsync();
         }
         catch (Exception ex)

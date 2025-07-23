@@ -51,6 +51,7 @@ builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<RegistrationService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<GoogleCalendarService>();
 
 // Add SignalR
 builder.Services.AddSignalR();

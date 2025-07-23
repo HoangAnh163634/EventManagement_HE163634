@@ -15,20 +15,20 @@
                 <div class="card-body">
                     <form method="post">
                         <div class="mb-3">
-                            <label asp-for="User.FullName" class="form-label text-white">Họ và tên</label>
-                            <input asp-for="User.FullName" class="form-control bg-dark text-white border-secondary" />
-                            <span asp-validation-for="User.FullName" class="text-danger"></span>
+                            <label asp-for="CurrentUser.FullName" class="form-label text-white">Họ và tên</label>
+                            <input asp-for="CurrentUser.FullName" class="form-control bg-dark text-white border-secondary" />
+                            <span asp-validation-for="CurrentUser.FullName" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="User.Email" class="form-label text-white">Email</label>
-                            <input asp-for="User.Email" class="form-control bg-dark text-white border-secondary" readonly />
+                            <label asp-for="CurrentUser.Email" class="form-label text-white">Email</label>
+                            <input asp-for="CurrentUser.Email" class="form-control bg-dark text-white border-secondary" readonly />
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="User.PhoneNumber" class="form-label text-white">Số điện thoại</label>
-                            <input asp-for="User.PhoneNumber" class="form-control bg-dark text-white border-secondary" />
-                            <span asp-validation-for="User.PhoneNumber" class="text-danger"></span>
+                            <label asp-for="CurrentUser.PhoneNumber" class="form-label text-white">Số điện thoại</label>
+                            <input asp-for="CurrentUser.PhoneNumber" class="form-control bg-dark text-white border-secondary" />
+                            <span asp-validation-for="CurrentUser.PhoneNumber" class="text-danger"></span>
                         </div>
 
                         <button type="submit" class="btn btn-gold">
@@ -49,7 +49,7 @@
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <span class="text-muted">Ngày tham gia:</span>
-                        <span class="text-white">@Model.User.CreatedAt.ToString("dd/MM/yyyy")</span>
+                        <span class="text-white">@Model.CurrentUser.CreatedAt.ToString("dd/MM/yyyy")</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="text-muted">Vai trò:</span>
@@ -80,6 +80,39 @@
                     </form>
                 </div>
             </div>
+
+            @{
+                var myEvents = Model.RegisteredEvents ?? new List<EventManagement.Models.Event>();
+            }
+            @if (Model.CurrentUser.CalendarSyncs == null || !Model.CurrentUser.CalendarSyncs.Any(s => s.Provider == "Google" && s.IsActive))
+            {
+                <form method="get" asp-page-handler="ConnectGoogleCalendar">
+                    <div class="mb-2">
+                        <label for="eventId" class="form-label">Chọn sự kiện để đồng bộ với Google Calendar:</label>
+                        <select id="eventId" class="form-select" required>
+                            <option value="">-- Chọn sự kiện --</option>
+                            @foreach (var evt in myEvents)
+                            {
+                                <option value="@evt.EventId">@evt.EventName (@evt.StartDate.ToString("dd/MM/yyyy"))</option>
+                            }
+                        </select>
+                    </div>
+                    <a id="connectGoogleBtn" href="#" class="btn btn-outline-danger" onclick="connectGoogleCalendar(event)">
+                        <i class="fab fa-google me-1"></i>Kết nối Google Calendar
+                    </a>
+                    <script>
+                        function connectGoogleCalendar(e) {
+                            e.preventDefault();
+                            var eventId = document.getElementById('eventId').value;
+                            if (!eventId) {
+                                alert('Vui lòng chọn sự kiện!');
+                                return;
+                            }
+                            window.location.href = '?handler=ConnectGoogleCalendar&eventId=' + eventId;
+                        }
+                    </script>
+                </form>
+            }
         </div>
     </div>
 </div>

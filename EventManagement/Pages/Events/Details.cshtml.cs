@@ -73,7 +73,7 @@ public class DetailsModel : PageModel
         return RedirectToPage("/Events/Details", new { id });
     }
 
-    public async Task<IActionResult> OnPostLogShareAsync(int id, string platform)
+    public Task<IActionResult> OnPostLogShareAsync(int id, string platform)
     {
         var userId = HttpContext.Session.GetInt32("UserId");
         var share = new SocialShare
@@ -92,7 +92,7 @@ public class DetailsModel : PageModel
         // _context.SocialShares.Add(share);
         // await _context.SaveChangesAsync();
 
-        return new JsonResult(new { success = true });
+        return Task.FromResult<IActionResult>(new JsonResult(new { success = true }));
     }
 
     public string GetStatusClass(string status)

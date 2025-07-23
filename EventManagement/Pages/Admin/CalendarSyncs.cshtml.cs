@@ -155,6 +155,38 @@ public class CalendarSyncsModel : PageModel
         }
     }
 
+    public async Task<IActionResult> OnPostSyncAllAsync()
+    {
+        try
+        {
+            var userRole = HttpContext.Session.GetString("UserRole");
+            if (userRole != "Admin")
+            {
+                return new JsonResult(new { success = false, message = "Không có quyền truy cập." });
+            }
+            var allSyncs = await _adminService.GetCalendarSyncsAsync(null, null, null, null, true, "date", "desc", 1, int.MaxValue);
+            int successCount = 0, failCount = 0;
+            foreach (var sync in allSyncs.Item1)
+            {
+                try
+                {
+                    await _adminService.SyncCalendarAsync(sync.SyncId);
+                    successCount++;
+                }
+                catch
+                {
+                    failCount++;
+                }
+            }
+            return new JsonResult(new { success = true, message = $"Đã đồng bộ {successCount} / {allSyncs.Item1.Count} sự kiện thành công." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error syncing all calendar events");
+            return new JsonResult(new { success = false, message = "Có lỗi xảy ra khi đồng bộ toàn bộ." });
+        }
+    }
+
     public string GetSortUrl(string column)
     {
         var newOrder = SortBy == column && SortOrder == "asc" ? "desc" : "asc";
