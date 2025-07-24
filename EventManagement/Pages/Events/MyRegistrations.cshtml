@@ -70,7 +70,7 @@
                                                     </p>
                                                 }
                                             }
-                                            else if (registration.Status == "Attended" && registration.Feedback == null)
+                                            else if ((registration.Status == "CheckedIn" || registration.Status == "Attended") && registration.Feedback == null)
                                             {
                                                 <a href="/Events/Feedback/@registration.RegistrationId" class="btn btn-primary">Give Feedback</a>
                                             }

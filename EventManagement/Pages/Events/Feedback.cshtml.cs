@@ -28,7 +28,9 @@ public class FeedbackModel : PageModel
             return NotFound();
         }
 
-        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        // Lấy userId từ Claims hoặc Session
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+            ?? HttpContext.Session.GetInt32("UserId")?.ToString();
         if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
         {
             return Unauthorized();
@@ -41,38 +43,27 @@ public class FeedbackModel : PageModel
 
         if (registration == null)
         {
+            _logger.LogWarning("Không tìm thấy registration với id {id} và userId {userId}", id, userId);
             return NotFound();
         }
 
-        if (registration.Status != "Attended")
-        {
-            return RedirectToPage("/Events/MyRegistrations");
-        }
-
-        if (registration.Feedback != null)
-        {
-            return RedirectToPage("/Events/MyRegistrations");
-        }
-
-        Event = await _context.Events
-            .Include(e => e.Registrations)
-            .FirstOrDefaultAsync(e => e.EventId == registration.EventId);
-
+        Event = registration.Event;
         if (Event == null)
         {
+            _logger.LogWarning("Registration {id} không có Event hoặc EventId không hợp lệ", id);
             return NotFound();
         }
 
-        // Check if user can submit feedback
-        CanSubmitFeedback = registration.Status == "CheckedIn" &&
-                           Event.EndDate <= DateTime.UtcNow;
+        // Cho phép đánh giá nếu đã CheckedIn hoặc Attended
+        CanSubmitFeedback = registration.Status == "CheckedIn" || registration.Status == "Attended";
 
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(int id, int rating, string comments, string? suggestions, bool wouldRecommend, bool isPublic)
     {
-        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+            ?? HttpContext.Session.GetInt32("UserId")?.ToString();
         if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
         {
             return RedirectToPage("/Account/Login");
@@ -90,17 +81,18 @@ public class FeedbackModel : PageModel
                 return RedirectToPage("/Events/Details", new { id });
             }
 
-            if (registration.Status != "Attended")
+            // Cho phép đánh giá nếu trạng thái là CheckedIn hoặc Attended
+            if (registration.Status != "Attended" && registration.Status != "CheckedIn")
             {
                 TempData["ErrorMessage"] = "Bạn cần check-in trước khi đánh giá.";
                 return RedirectToPage("/Events/Details", new { id });
             }
 
-            if (registration.Event.EndDate > DateTime.UtcNow)
-            {
-                TempData["ErrorMessage"] = "Bạn chỉ có thể đánh giá sau khi sự kiện kết thúc.";
-                return RedirectToPage("/Events/Details", new { id });
-            }
+            // if (registration.Event.EndDate > DateTime.UtcNow)
+            // {
+            //     TempData["ErrorMessage"] = "Bạn chỉ có thể đánh giá sau khi sự kiện kết thúc.";
+            //     return RedirectToPage("/Events/Details", new { id = registration.Event.EventId });
+            // }
 
             if (registration.Feedback != null)
             {

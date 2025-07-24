@@ -782,10 +782,11 @@ public class AdminService
             }
 
             var now = DateTime.Now;
-            if (now < registration.Event.StartDate.AddHours(-1))
-            {
-                throw new InvalidOperationException("Chỉ có thể check-in trong vòng 1 giờ trước khi sự kiện bắt đầu.");
-            }
+            // Bảo vệ: Chỉ cho phép check-in trong vòng 1 giờ trước khi sự kiện bắt đầu
+            // if (now < qrcode.Event.StartDate.AddHours(-1))
+            // {
+            //     throw new InvalidOperationException("Chỉ có thể check-in trong vòng 1 giờ trước khi sự kiện bắt đầu.");
+            // }
 
             if (now > registration.Event.EndDate)
             {
@@ -1327,10 +1328,11 @@ public class AdminService
             }
 
             var now = DateTime.Now;
-            if (now < qrcode.Event.StartDate.AddHours(-1))
-            {
-                throw new InvalidOperationException("Chỉ có thể check-in trong vòng 1 giờ trước khi sự kiện bắt đầu.");
-            }
+            // Bảo vệ: Chỉ cho phép check-in trong vòng 1 giờ trước khi sự kiện bắt đầu
+            // if (now < qrcode.Event.StartDate.AddHours(-1))
+            // {
+            //     throw new InvalidOperationException("Chỉ có thể check-in trong vòng 1 giờ trước khi sự kiện bắt đầu.");
+            // }
 
             if (now > qrcode.Event.EndDate)
             {

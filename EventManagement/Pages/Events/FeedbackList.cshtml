@@ -1,0 +1,133 @@
+@page
+@model EventManagement.Pages.Events.FeedbackListModel
+@{
+    ViewData["Title"] = "Tất cả đánh giá sự kiện";
+}
+<div class="container py-5">
+    <h2 class="text-gold mb-4">
+        <i class="fas fa-comments me-2"></i>Tất cả đánh giá cho sự kiện: <span class="text-white">@Model.Event?.EventName</span>
+    </h2>
+    <form method="get" class="row g-3 mb-4">
+        <input type="hidden" name="eventId" value="@Model.Event?.EventId" />
+        <div class="col-md-2">
+            <select name="rating" class="form-select bg-dark text-white border-secondary">
+                <option value="">Tất cả sao</option>
+                @for (int i = 5; i >= 1; i--)
+                {
+                    var selected = Model.Rating == i ? "selected" : "";
+                    @Html.Raw($"<option value=\"{i}\" {selected}>{i} sao</option>")
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="isPublic" class="form-select bg-dark text-white border-secondary">
+                <option value="">Công khai/riêng tư</option>
+                @{
+                    var selectedTruePublic = Model.IsPublic == true ? "selected" : "";
+                    var selectedFalsePublic = Model.IsPublic == false ? "selected" : "";
+                }
+                @Html.Raw($"<option value=\"true\" {selectedTruePublic}>Công khai</option>")
+                @Html.Raw($"<option value=\"false\" {selectedFalsePublic}>Riêng tư</option>")
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="wouldRecommend" class="form-select bg-dark text-white border-secondary">
+                <option value="">Giới thiệu</option>
+                @{
+                    var selectedTrueRecommend = Model.WouldRecommend == true ? "selected" : "";
+                    var selectedFalseRecommend = Model.WouldRecommend == false ? "selected" : "";
+                }
+                @Html.Raw($"<option value=\"true\" {selectedTrueRecommend}>Sẽ giới thiệu</option>")
+                @Html.Raw($"<option value=\"false\" {selectedFalseRecommend}>Không giới thiệu</option>")
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="text" name="search" class="form-control bg-dark text-white border-secondary" placeholder="Tìm kiếm nhận xét..." value="@Model.Search" />
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-gold w-100"><i class="fas fa-filter me-2"></i>Lọc</button>
+        </div>
+    </form>
+    @if (Model.Feedbacks.Any())
+    {
+        <div class="row g-4">
+            @foreach (var feedback in Model.Feedbacks)
+            {
+                <div class="col-12">
+                    <div class="card bg-dark border-gold">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h5 class="text-gold mb-1">@feedback.Attendee.FullName</h5>
+                                    <small class="text-muted">@feedback.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                                <div class="rating">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <i class="fas fa-star @(feedback.Rating.HasValue && i <= feedback.Rating.Value ? "text-warning" : "text-muted")"></i>
+                                    }
+                                </div>
+                            </div>
+                            <p class="text-white mb-2">@feedback.Comments</p>
+                            @if (!string.IsNullOrEmpty(feedback.Suggestions))
+                            {
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-lightbulb me-2"></i>@feedback.Suggestions
+                                </p>
+                            }
+                            <div class="mt-2">
+                                <span class="badge bg-@(feedback.IsPublic ? "success" : "secondary")">
+                                    @(feedback.IsPublic ? "Công khai" : "Riêng tư")
+                                </span>
+                                @if (feedback.WouldRecommend.HasValue && feedback.WouldRecommend.Value)
+                                {
+                                    <span class="badge bg-info ms-2">
+                                        <i class="fas fa-thumbs-up me-1"></i>Sẽ giới thiệu
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <!-- Pagination -->
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : null)">
+                    <a class="page-link" href="?eventId=@Model.Event?.EventId&rating=@Model.Rating&isPublic=@Model.IsPublic&wouldRecommend=@Model.WouldRecommend&search=@Model.Search&page=@(Model.PageNumber - 1)">Trước</a>
+                </li>
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(Model.PageNumber == i ? "active" : null)">
+                        <a class="page-link" href="?eventId=@Model.Event?.EventId&rating=@Model.Rating&isPublic=@Model.IsPublic&wouldRecommend=@Model.WouldRecommend&search=@Model.Search&page=@i">@i</a>
+                    </li>
+                }
+                <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : null)">
+                    <a class="page-link" href="?eventId=@Model.Event?.EventId&rating=@Model.Rating&isPublic=@Model.IsPublic&wouldRecommend=@Model.WouldRecommend&search=@Model.Search&page=@(Model.PageNumber + 1)">Sau</a>
+                </li>
+            </ul>
+        </nav>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-star fa-4x text-muted mb-4"></i>
+            <h3 class="text-muted">Chưa có đánh giá nào cho sự kiện này</h3>
+            <a href="/Events" class="btn btn-outline-gold mt-3">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+            </a>
+        </div>
+    }
+</div>
+@section Styles {
+    <style>
+        .rating {
+            display: flex;
+            gap: 5px;
+        }
+        .rating .fa-star {
+            font-size: 20px;
+        }
+    </style>
+} 
